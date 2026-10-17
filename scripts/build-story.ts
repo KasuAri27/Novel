@@ -15,7 +15,7 @@ import { z } from 'zod';
 import { parseVars } from '../src/engine/vars.ts';
 import { parseExpr } from '../src/engine/expr.ts';
 import { checkStory, summarize, type CheckMeta } from './check-story.ts';
-import type { Story, Node, Block, Next, ChapterMeta, Effect, Expr } from '../src/engine/types.ts';
+import type { Story, Node, Block, Next, ChapterMeta, Effect, Expr, StoryAssets } from '../src/engine/types.ts';
 
 const ROOT = resolve(import.meta.dirname, '..');
 const CHAPTER_FILES = ['ch01.md', 'ch02.md', 'ch03.md', 'ch04.md'];
@@ -97,6 +97,31 @@ function loadLogic(chapterNo: number): Logic {
     }
   }
   if (data?.endings) Object.assign(out.endings, data.endings);
+  return out;
+}
+
+/** 读取素材清单 story/assets.yaml（可缺省；缺文件时给空表） */
+function loadAssets(): StoryAssets {
+  const out: StoryAssets = { portraits: {} };
+  const file = resolve(ROOT, 'story', 'assets.yaml');
+  let text: string;
+  try {
+    text = readFileSync(file, 'utf8');
+  } catch {
+    return out;
+  }
+  const schema = z.object({ portraits: z.record(z.string(), z.string()).optional() });
+  let data: z.infer<typeof schema>;
+  try {
+    data = schema.parse(parseYaml(text) ?? {});
+  } catch (e) {
+    if (e instanceof z.ZodError) {
+      const detail = e.issues.map((i) => `${i.path.join('.') || '(根)'} — ${i.message}`).join('；');
+      throw new Error(`assets.yaml 校验失败：${detail}`);
+    }
+    throw new Error(`assets.yaml 不是合法 YAML：${(e as Error).message}`);
+  }
+  if (data.portraits) out.portraits = data.portraits;
   return out;
 }
 
@@ -348,7 +373,14 @@ function build(): { story: Story; meta: CheckMeta; parseWarnings: string[] } {
 
     let next: Next;
     if (endings[p.id]) {
-      next = { kind: 'ending', id: endings[p.id]! };
+      if (p.choice) {
+        // 选择之后才收束：插一个无正文的结局节，三个选项都通向它
+        const eid = `${p.id}__end`;
+        next = choiceNext(eid);
+        synthetic.push({ id: eid, chapter: p.chapter, next: { kind: 'ending', id: endings[p.id]! } });
+      } else {
+        next = { kind: 'ending', id: endings[p.id]! };
+      }
     } else if (routes[p.id]) {
       const route = routes[p.id]!;
       if (p.choice) {
@@ -369,7 +401,7 @@ function build(): { story: Story; meta: CheckMeta; parseWarnings: string[] } {
 
   for (const s of synthetic) nodes[s.id] = { id: s.id, chapter: s.chapter, title: '', blocks: [], next: s.next };
 
-  const story: Story = { version: 1, start: ordered[0]!.id, vars, facts: {}, nodes, chapters };
+  const story: Story = { version: 1, start: ordered[0]!.id, vars, facts: {}, nodes, chapters, assets: loadAssets() };
   meta.parsedNodeIds = ordered.map((x) => x.id);
   return { story, meta, parseWarnings };
 }

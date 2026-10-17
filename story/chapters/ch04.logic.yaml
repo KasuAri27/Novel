@@ -2,13 +2,17 @@
 # 依据：ch04.md 章首路由注记 + docs/chapter4_dsl_plan.md §3。
 # TODO(作者)：第四章路由存在重叠争议（见 AGENTS.md 第11节），此处按 ch04.md 注记的判定顺序「先匹配先生效」。
 # 键 ch04_S0 = 第四章章首节点；E18 选完后按三把尺分流。
-# TODO(作者)：E18/E19 占位空效果（不改变行为），待定稿赋分。
+# TODO(作者)：E18/E19/E20 占位空效果（不改变行为），待定稿赋分。
 choices:
   E18:
     A: { effects: [] }
     B: { effects: [] }
     C: { effects: [] }
   E19:
+    A: { effects: [] }
+    B: { effects: [] }
+    C: { effects: [] }
+  E20:
     A: { effects: [] }
     B: { effects: [] }
     C: { effects: [] }

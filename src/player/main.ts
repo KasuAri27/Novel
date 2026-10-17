@@ -1,7 +1,8 @@
 /**
- * M6 播放器：ADV 底框骨架（暂无立绘）。
+ * M6 播放器：NVL/ADV 底框 + 立绘层（Dark Theatrical 视觉）。
  * 数据流：engine.step(state, input) → events → 渲染。
- * 事件：say / showChoice / showEcho / chapterTitle / ending（背景、立绘、音乐留待以后）。
+ * 事件：say / showChoice / showEcho / chapterTitle / ending（背景、音乐留待以后）。
+ * 立绘：speaker → story.assets.portraits（来自 story/assets.yaml），淡入切换；旁白时压暗。
  */
 import { createEngine } from '../engine/step.ts';
 import type { EngineState, Event, Story } from '../engine/types.ts';
@@ -67,6 +68,7 @@ async function main(): Promise<void> {
 
   const stage = make('div', 'stage');
   const bg = make('div', 'bg');
+  const sprites = make('div', 'sprites');
   const titleOverlay = make('div', 'title-overlay hidden');
   const dialog = make('div', 'dialog');
   const nameBox = make('div', 'name');
@@ -77,7 +79,7 @@ async function main(): Promise<void> {
   const hint = make('div', 'hint', '点击 / 空格 继续');
   const endingLayer = make('div', 'ending hidden');
   const toolbar = make('div', 'toolbar');
-  stage.append(bg, titleOverlay, dialog, choiceLayer, endingLayer, hint, toolbar);
+  stage.append(bg, sprites, titleOverlay, dialog, choiceLayer, endingLayer, hint, toolbar);
   const savelayer = make('div', 'savelayer hidden');
   app.append(stage, savelayer);
 
@@ -130,11 +132,48 @@ async function main(): Promise<void> {
     scheduleAuto();
   };
 
+  // ---- 立绘 ----
+  // 立绘文件名来自 story/assets.yaml（编译进 story.json 的 assets.portraits）。
+  const portraitMap = story.assets?.portraits ?? {};
+  const spriteCache = new Map<string, HTMLImageElement>();
+  let lastPortrait: string | null = null; // 最后一次有立绘的说话人
+
+  const showPortrait = (speaker: string): void => {
+    const file = portraitMap[speaker];
+    if (file) {
+      let img = spriteCache.get(speaker);
+      if (!img) {
+        img = make('img', 'sprite');
+        img.src = `portraits/${file}`;
+        img.alt = speaker;
+        img.decoding = 'async';
+        sprites.append(img);
+        spriteCache.set(speaker, img);
+      }
+      for (const [name, other] of spriteCache) {
+        other.classList.toggle('active', name === speaker);
+        other.classList.remove('dim');
+      }
+      lastPortrait = speaker;
+    } else {
+      // 旁白 / 无立绘角色：保留立绘但压暗
+      const cur = lastPortrait ? spriteCache.get(lastPortrait) : null;
+      cur?.classList.add('dim');
+    }
+  };
+
+  const clearPortraits = (): void => {
+    sprites.innerHTML = '';
+    spriteCache.clear();
+    lastPortrait = null;
+  };
+
   // ---- 渲染 ----
   const renderSay = (p: Extract<Page, { kind: 'say' }>): void => {
     endingLayer.classList.add('hidden');
     choiceLayer.classList.add('hidden');
     nameBox.textContent = p.speaker;
+    showPortrait(p.speaker);
     type(p.text);
   };
 
@@ -171,6 +210,7 @@ async function main(): Promise<void> {
       pages = [];
       dialog.classList.remove('hidden');
       endingLayer.classList.add('hidden');
+      clearPortraits();
       sync();
     };
     endingLayer.append(make('div', 'tag', 'THE END'), make('div', 'id', p.id), restart);
@@ -241,6 +281,7 @@ async function main(): Promise<void> {
     }
     pages = [];
     textBox.textContent = '';
+    clearPortraits();
     sync();
   };
 
@@ -300,6 +341,7 @@ async function main(): Promise<void> {
     dialog.classList.remove('hidden');
     endingLayer.classList.add('hidden');
     textBox.textContent = '';
+    clearPortraits();
     savelayer.classList.add('hidden');
     if (warned) window.alert('剧情已更新，已尝试用历史记录重放恢复进度。');
     sync();

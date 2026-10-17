@@ -91,6 +91,12 @@ export interface ChapterMeta {
   nodes: string[];
 }
 
+/** 素材清单（来自 story/assets.yaml 的编译产物；素材本体不入库） */
+export interface StoryAssets {
+  /** 说话人 → 立绘文件名（相对 public/portraits/） */
+  portraits: Record<string, string>;
+}
+
 /** 编译产物：播放器只读它 */
 export interface Story {
   version: 1;
@@ -99,6 +105,8 @@ export interface Story {
   facts: FactDefs;
   nodes: Record<string, Node>;
   chapters: ChapterMeta[];
+  /** 素材清单（可缺省：没有 assets.yaml 时为空） */
+  assets?: StoryAssets;
 }
 
 /* ------------------------------------------------------------------ *

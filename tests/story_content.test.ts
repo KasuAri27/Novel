@@ -1,6 +1,6 @@
 /**
  * M3 内容冒烟测试：加载编译产物 story.json，用引擎从头模拟通关。
- * 目的：证明 19 选择 / 57 选项齐全，且第四章四条路由各自可达（四个结局）。
+ * 目的：证明 20 选择 / 60 选项齐全，且第四章四条路由各自可达（四个结局）。
  */
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
@@ -12,7 +12,7 @@ const story: Story = JSON.parse(
   readFileSync(resolve(import.meta.dirname, '..', 'public', 'story', 'story.json'), 'utf8'),
 );
 
-/** 按给定按键序列（对应 E01…E19 的 A/B/C）自动通关，返回结局 id 与终局变量 */
+/** 按给定按键序列（对应 E01…E20 的 A/B/C）自动通关，返回结局 id 与终局变量 */
 function play(keys: string[]): { ending: string; vars: Record<string, number> } {
   const eng = createEngine(story);
   let state = eng.initialState();
@@ -38,13 +38,16 @@ function play(keys: string[]): { ending: string; vars: Record<string, number> } 
 describe('story.json 内容', () => {
   it('章数、节点数、选择数、选项数正确', () => {
     expect(story.chapters.length).toBe(4);
-    const nodeList = Object.values(story.nodes).filter((n) => !n.id.endsWith('__route'));
+    // 过滤掉编译器生成的合成节点（__route：选择后分流；__end：选择后收束结局）
+    const nodeList = Object.values(story.nodes).filter(
+      (n) => !n.id.endsWith('__route') && !n.id.endsWith('__end'),
+    );
     expect(nodeList.length).toBe(27);
     const choiceNodes = nodeList.filter((n) => n.next.kind === 'choice');
-    expect(choiceNodes.length).toBe(19);
+    expect(choiceNodes.length).toBe(20);
     let opts = 0;
     for (const n of choiceNodes) if (n.next.kind === 'choice') opts += n.next.options.length;
-    expect(opts).toBe(57);
+    expect(opts).toBe(60);
   });
 
   it('起点与第一章首节一致', () => {
@@ -53,8 +56,8 @@ describe('story.json 内容', () => {
 });
 
 describe('第四章四条路由各自可达', () => {
-  // 依次对应 E01…E19
-  const NO_CASE = ['A', 'A', 'A', 'C', 'B', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'C', 'A', 'A', 'A', 'A'];
+  // 依次对应 E01…E19；NO_CASE 路线还会经过 E20，故最后多给一项
+  const NO_CASE = ['A', 'A', 'A', 'C', 'B', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'C', 'A', 'A', 'A', 'A', 'A'];
   const ROUTE_3P = ['A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'C', 'A', 'A', 'A', 'A', 'C', 'C', 'A', 'A', 'A'];
   const SHIRO = ['A', 'B', 'A', 'A', 'B', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'C', 'C', 'A', 'A', 'A', 'A'];
   const MERURU = ['A', 'A', 'A', 'A', 'B', 'A', 'A', 'A', 'C', 'A', 'A', 'A', 'A', 'B', 'B', 'A', 'A', 'A', 'A'];

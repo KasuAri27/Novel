@@ -1,0 +1,20 @@
+# assets.yaml —— 素材清单（背景、立绘、音乐等）
+#
+# 立绘来源：D:\AI_Project\manosaba-character-composer\portraits\（原作提取物，不入库），
+# 复制到 public/portraits/ 后使用。键 = 剧本里的说话人；值 = 文件名。
+# 之后要加背景、音乐时照此扩写，并在 build-story.ts 里合并进 story.json。
+
+portraits:
+  艾玛: ema.png
+  希罗: hiro.png
+  梅露露: meruru.png
+  蕾雅: leia.png
+  可可: coco.png
+  米莉亚: miria.png
+  雪莉: sherry.png
+  亚里沙: alisa.png
+  汉娜: hanna.png
+  玛格: margo.png
+  安安: anan.png
+  诺亚: noah.png
+  奈叶香: nanoka.png

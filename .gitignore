@@ -7,3 +7,4 @@ dist/
 
 # 素材（原作提取物）不入库，仅通过 assets.yaml 引用
 assets/
+public/portraits/
