@@ -1,0 +1,32 @@
+# ch04.logic.yaml —— 第四章 路由与结局
+# 依据：ch04.md 章首路由注记 + docs/chapter4_dsl_plan.md §3。
+# TODO(作者)：第四章路由存在重叠争议（见 AGENTS.md 第11节），此处按 ch04.md 注记的判定顺序「先匹配先生效」。
+# 键 ch04_S0 = 第四章章首节点；E18 选完后按三把尺分流。
+# TODO(作者)：E18/E19 占位空效果（不改变行为），待定稿赋分。
+choices:
+  E18:
+    A: { effects: [] }
+    B: { effects: [] }
+    C: { effects: [] }
+  E19:
+    A: { effects: [] }
+    B: { effects: [] }
+    C: { effects: [] }
+routes:
+  ch04_S0:
+    rules:
+      - when: "reia.explore >= 2 && hiro.explore >= 2 && meruru.explore >= 2"
+        goto: ch04_S-D1
+      - when: "reia.explore < 2"
+        goto: ch04_S-A1
+      - when: "hiro.explore < 2"
+        goto: ch04_S-B1
+      - when: "meruru.explore < 2"
+        goto: ch04_S-C1
+    else: ch04_S-D1
+# 每条分支的小节末尾收成结局（第四章暂为 demo 收尾，接第五章时应删除）。
+endings:
+  ch04_S-D2: END_ch04_no_case
+  ch04_S-A3: END_ch04_3p
+  ch04_S-B2: END_ch04_shiro
+  ch04_S-C2: END_ch04_meruru

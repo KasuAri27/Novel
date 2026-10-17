@@ -1,72 +1,90 @@
 /**
- * 剧情内容校验：编译 src/stories 下所有 .story.txt，要求零错误；
- * 并做结构性检查（入口、可达性、非叶子节点出口）。
+ * M3 内容冒烟测试：加载编译产物 story.json，用引擎从头模拟通关。
+ * 目的：证明 19 选择 / 57 选项齐全，且第四章四条路由各自可达（四个结局）。
  */
-import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { compileFiles } from '../src/parser/compiler';
+import { createEngine } from '../src/engine/step';
+import type { Story } from '../src/engine/types';
 
-const storiesDir = join(__dirname, '../src/stories');
+const story: Story = JSON.parse(
+  readFileSync(resolve(import.meta.dirname, '..', 'public', 'story', 'story.json'), 'utf8'),
+);
 
-function collectStoryFiles(dir: string): string[] {
-  const out: string[] = [];
-  for (const name of readdirSync(dir, { withFileTypes: true })) {
-    const p = join(dir, name.name);
-    if (name.isDirectory()) out.push(...collectStoryFiles(p));
-    else if (name.name.endsWith('.story.txt')) out.push(p);
+/** 按给定按键序列（对应 E01…E19 的 A/B/C）自动通关，返回结局 id 与终局变量 */
+function play(keys: string[]): { ending: string; vars: Record<string, number> } {
+  const eng = createEngine(story);
+  let state = eng.initialState();
+  let pendingKey: string | null = null;
+  let ci = 0;
+  for (let guard = 0; guard < 500000; guard++) {
+    const input = pendingKey
+      ? ({ type: 'choose', key: pendingKey } as const)
+      : ({ type: 'advance' } as const);
+    pendingKey = null;
+    const r = eng.step(state, input);
+    state = r.state;
+    let ended: string | null = null;
+    for (const e of r.events) {
+      if (e.type === 'showChoice') pendingKey = keys[ci++] ?? 'A';
+      else if (e.type === 'ending') ended = e.id;
+    }
+    if (ended) return { ending: ended, vars: state.vars };
   }
-  return out;
+  throw new Error('未能到达结局');
 }
 
-describe('剧情编译', () => {
-  const files = collectStoryFiles(storiesDir).map((p) => ({
-    name: p,
-    source: readFileSync(p, 'utf-8'),
-  }));
-
-  it('所有 .story.txt 编译零错误', () => {
-    const { stories, errors } = compileFiles(files);
-    expect(errors, errors.map((e) => `${e.file}:${e.line} ${e.message}`).join('\n')).toHaveLength(0);
-    expect(stories.length).toBeGreaterThan(0);
+describe('story.json 内容', () => {
+  it('章数、节点数、选择数、选项数正确', () => {
+    expect(story.chapters.length).toBe(4);
+    const nodeList = Object.values(story.nodes).filter((n) => !n.id.endsWith('__route'));
+    expect(nodeList.length).toBe(27);
+    const choiceNodes = nodeList.filter((n) => n.next.kind === 'choice');
+    expect(choiceNodes.length).toBe(19);
+    let opts = 0;
+    for (const n of choiceNodes) if (n.next.kind === 'choice') opts += n.next.options.length;
+    expect(opts).toBe(57);
   });
 
-  it('魔女审判第一章：结构完整且无不可达节点', () => {
-    const { stories, errors } = compileFiles(files);
-    expect(errors).toHaveLength(0);
-    const story = stories.find((s) => s.meta.id === 'majo_shinpan');
-    expect(story).toBeTruthy();
-    if (!story) return;
+  it('起点与第一章首节一致', () => {
+    expect(story.start).toBe('ch01_S1');
+  });
+});
 
-    expect(story.entry).toBe('s0_breakfast');
+describe('第四章四条路由各自可达', () => {
+  // 依次对应 E01…E19
+  const NO_CASE = ['A', 'A', 'A', 'C', 'B', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'C', 'A', 'A', 'A', 'A'];
+  const ROUTE_3P = ['A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'C', 'A', 'A', 'A', 'A', 'C', 'C', 'A', 'A', 'A'];
+  const SHIRO = ['A', 'B', 'A', 'A', 'B', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'A', 'C', 'C', 'A', 'A', 'A', 'A'];
+  const MERURU = ['A', 'A', 'A', 'A', 'B', 'A', 'A', 'A', 'C', 'A', 'A', 'A', 'A', 'B', 'B', 'A', 'A', 'A', 'A'];
 
-    // 从入口做可达性遍历
-    const seen = new Set<string>();
-    const queue = [story.entry];
-    while (queue.length) {
-      const id = queue.pop()!;
-      if (seen.has(id)) continue;
-      seen.add(id);
-      const node = story.nodes[id];
-      for (const c of node.choices) queue.push(c.goto);
-      if (node.next) queue.push(node.next);
-    }
-    const all = Object.keys(story.nodes);
-    const unreachable = all.filter((id) => !seen.has(id));
-    expect(unreachable, `不可达节点: ${unreachable.join(', ')}`).toHaveLength(0);
+  it('三把尺全满 → 无第一案（全员篇）', () => {
+    const { ending, vars } = play(NO_CASE);
+    expect(vars['hiro.explore']).toBeGreaterThanOrEqual(2);
+    expect(vars['meruru.explore']).toBeGreaterThanOrEqual(2);
+    expect(vars['reia.explore']).toBeGreaterThanOrEqual(2);
+    expect(ending).toBe('END_ch04_no_case');
+  });
 
-    // 非叶子节点必须有出口；叶子节点必须是预期章节收束点
-    const expectedLeaves = new Set([
-      'ch4_end_3p',
-      'ch4_end_shiro',
-      'ch4_end_meruru',
-      'ch4_end_nocase',
-    ]);
-    for (const id of all) {
-      const node = story.nodes[id];
-      const isLeaf = node.choices.length === 0 && !node.next;
-      if (isLeaf) expect(expectedLeaves.has(id), `意外叶子节点: ${id}`).toBe(true);
-      else expect(Boolean(node.next) || node.choices.length > 0, `节点 ${id} 无出口`).toBe(true);
-    }
+  it('蕾雅尺不足 → 诺亚蕾雅案', () => {
+    const { ending, vars } = play(ROUTE_3P);
+    expect(vars['reia.explore']).toBeLessThan(2);
+    expect(ending).toBe('END_ch04_3p');
+  });
+
+  it('希罗尺不足且蕾雅尺达标 → 希罗反杀案', () => {
+    const { ending, vars } = play(SHIRO);
+    expect(vars['reia.explore']).toBeGreaterThanOrEqual(2);
+    expect(vars['hiro.explore']).toBeLessThan(2);
+    expect(ending).toBe('END_ch04_shiro');
+  });
+
+  it('梅露露尺不足、其余达标 → 梅露露之死案', () => {
+    const { ending, vars } = play(MERURU);
+    expect(vars['hiro.explore']).toBeGreaterThanOrEqual(2);
+    expect(vars['reia.explore']).toBeGreaterThanOrEqual(2);
+    expect(vars['meruru.explore']).toBeLessThan(2);
+    expect(ending).toBe('END_ch04_meruru');
   });
 });

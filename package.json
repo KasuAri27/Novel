@@ -3,29 +3,25 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
-  "description": "模块化互动小说播放器引擎（信息差驱动 · .txt DSL → 内部 JSON 模型）",
+  "description": "模块化互动小说：md + logic.yaml → story.json → 引擎 → 播放器",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "story:sync": "node scripts/sync-chapters.mjs",
-    "story:watch": "node scripts/sync-chapters.mjs --watch"
+    "typecheck": "tsc --noEmit",
+    "story:build": "node scripts/build-story.ts",
+    "story:check": "node scripts/build-story.ts --check",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "zod": "^3.23.8",
-    "zustand": "^4.5.5"
+    "yaml": "^2.6.1",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/react": "^18.3.12",
-    "@types/react-dom": "^18.3.1",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@types/node": "^22.10.2",
     "typescript": "^5.6.3",
-    "vite": "^5.4.11",
-    "vite-plugin-pwa": "^1.3.0",
+    "vite": "^5.4.10",
     "vitest": "^2.1.8"
   }
 }

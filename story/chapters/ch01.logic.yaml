@@ -1,0 +1,31 @@
+# ch01.logic.yaml —— 第一章 选项效果
+# 变量代号：希罗=hiro、梅露露=meruru、蕾雅=reia、艾玛=ema（见 story/vars.yaml）。
+# 依据：docs/chapter4_dsl_plan.md §2「前三章 → 效果映射」。
+# TODO(作者)：仅 §2 明确列出的选择赋分；E01/E06 已补占位空效果，待定稿赋分。
+choices:
+  # TODO(作者)：E01 占位空效果（不改变行为），待定稿赋分。
+  E01:
+    A: { effects: [] }
+    B: { effects: [] }
+    C: { effects: [] }
+  E02:
+    A: { effects: [{ var: hiro.explore, add: 1 }] }
+    B: { effects: [] }
+    C: { effects: [{ var: hiro.explore, add: 1 }] }
+  E03:
+    A: { effects: [{ know: ema, fact: 雪的名字 }] }
+    B: { effects: [{ know: ema, fact: 雪的名字 }, { know: hiro, fact: 雪的名字 }] }
+    C: { effects: [] }
+  E04:
+    A: { effects: [{ rel: [meruru, ema], add: 1 }] }
+    B: { effects: [{ var: meruru.explore, add: 1 }] }
+    C: { effects: [{ var: meruru.explore, add: 1 }, { rel: [meruru, ema], add: 1 }] }
+  E05:
+    A: { effects: [] }
+    B: { effects: [{ var: reia.explore, add: 1 }] }
+    C: { effects: [{ know: ema, fact: 诺亚接住蕾雅 }] }
+  # TODO(作者)：E06 占位空效果（不改变行为），待定稿赋分。
+  E06:
+    A: { effects: [] }
+    B: { effects: [] }
+    C: { effects: [] }

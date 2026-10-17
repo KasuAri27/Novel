@@ -1,0 +1,26 @@
+# ch03.logic.yaml —— 第三章 选项效果
+# 依据：docs/chapter4_dsl_plan.md §2。
+# TODO(作者)：E13/E17 已补占位空效果，待定稿赋分。
+choices:
+  # TODO(作者)：E13 占位空效果（不改变行为），待定稿赋分。
+  E13:
+    A: { effects: [] }
+    B: { effects: [] }
+    C: { effects: [] }
+  E14:
+    A: { effects: [{ var: hiro.explore, add: 1 }, { know: hiro, fact: 雪的名字 }] }
+    B: { effects: [{ var: hiro.explore, add: 1 }] }
+    C: { effects: [{ know: ema, fact: 雪的名字 }] }
+  E15:
+    A: { effects: [{ var: meruru.explore, add: 1 }, { know: ema, fact: 玛格怕被惦记 }] }
+    B: { effects: [{ rel: [meruru, ema], add: 1 }] }
+    C: { effects: [{ var: meruru.explore, add: 1 }, { know: ema, fact: 玛格怕被惦记 }, { rel: [meruru, ema], add: 1 }] }
+  E16:
+    A: { effects: [{ var: reia.explore, add: 1 }] }
+    B: { effects: [{ var: hiro.explore, add: 1 }] }
+    C: { effects: [{ know: ema, fact: 诺亚接住蕾雅 }] }
+  # TODO(作者)：E17 占位空效果（不改变行为），待定稿赋分。
+  E17:
+    A: { effects: [] }
+    B: { effects: [] }
+    C: { effects: [] }

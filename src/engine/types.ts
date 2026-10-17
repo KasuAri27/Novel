@@ -1,142 +1,163 @@
 /**
- * 引擎核心类型定义（信息差驱动）
- *
- * 这里是「内容契约层」与「运行时」之间的边界：
- * 解析器把 .story.txt DSL 编译成下面的 Story 模型；引擎只认识 Story / GameState，
- * 完全不关心具体剧情。换剧情 = 换文本，不动这些类型。
+ * 引擎类型定义（纯逻辑，不含 DOM / React）。
+ * 与 AGENTS.md 第 6 节 story.json 结构一一对应。
  */
 
-export type CharId = string;
-export type FactId = string;
-export type NodeId = string;
-export type EndingId = string;
-export type FlagName = string;
+/** 变量声明：取值夹在 [min, max]，init 为初始值 */
+export interface VarDef {
+  min: number;
+  max: number;
+  init: number;
+}
 
-/** 比较运算符（仅用于返回数值的条件动词，如 explore / rel） */
+/** 全局变量表（来自 vars.yaml，对应“三把尺”等数值） */
+export type VarDefs = Record<string, VarDef>;
+
+/** 事实声明：信息差不量化，仅用于剧情推进 */
+export interface FactDef {
+  label?: string;
+}
+
+export type FactDefs = Record<string, FactDef>;
+
+/** 比较运算符 */
 export type CompareOp = '>=' | '<=' | '>' | '<' | '==' | '!=';
 
+/** 表达式里的项：变量引用或数字字面量 */
+export type Term = { var: string } | { num: number };
+
 /**
- * 条件表达式 AST。求值后得到 boolean。
- * - atom：调用某个条件动词（knows/alive/dead/flag/explore/rel...）
- *   - 返回 bool 的动词忽略 op/value
- *   - 返回 num 的动词必须带 op + value 做比较
- * - and/or/not：布尔组合
- * - lit：常量（用于缺省「恒真」等情况）
+ * 条件表达式（JSON 语法树）。
+ * 由编译脚本把 `hiro.explore >= 2 && meruru.explore < 2` 这类文本编译成该结构，
+ * 引擎只解释执行，绝不使用 eval / new Function。
  */
-export type Condition =
-  | { kind: 'lit'; value: boolean }
-  | { kind: 'atom'; verb: string; args: string[]; op?: CompareOp; value?: number }
-  | { kind: 'and'; parts: Condition[] }
-  | { kind: 'or'; parts: Condition[] }
-  | { kind: 'not'; part: Condition };
+export type Expr =
+  | { op: 'and'; parts: Expr[] }
+  | { op: 'or'; parts: Expr[] }
+  | { op: 'not'; part: Expr }
+  | { op: 'cmp'; cmp: CompareOp; left: Term; right: Term }
+  | { op: 'lit'; value: number };
 
-/** 效果 AST：应用到 GameState 上产生新状态（授予知识、杀人、置位等） */
-export interface Effect {
-  verb: string;
-  args: string[];
-  /** set/rel/explore 等携带的数值或字面量 */
-  value?: number | string | boolean;
-}
-
-/** 一条展示文本（旁白或角色对白） */
-export interface Line {
-  /** 说话者；null 表示旁白 */
-  speaker: CharId | null;
+/**
+ * 一段文字。
+ * speaker 是说话人（`### 角色名`；旁白为 '旁白'）；缺省表示旧写法里的纯叙述。
+ */
+export interface Block {
+  type: 'text';
+  speaker?: string;
   text: string;
 }
+
+/**
+ * 效果：单值变量加减/置值；二元关系档位增减；注入信息差（谁由此知道了什么）。
+ * 信息差（know）与关系（rel）都不写进 vars.yaml。
+ */
+export type Effect =
+  | { var: string; add?: number; set?: number }
+  | { rel: [string, string]; add: number }
+  | { know: string; fact: string };
 
 /** 一个选项 */
-export interface Choice {
-  id: string;
-  /** 选项按钮显示文本 */
-  label: string;
-  /** 跳转目标节点 */
-  goto: NodeId;
-  /** 显示门控：仅当条件为真时该选项出现（信息差核心：谁知道什么决定能选什么） */
-  when: Condition;
-  /** 选中后应用的效果（通常给某角色授予事实） */
-  do: Effect[];
-}
-
-/** 剧情节点：一串文本 + 若干出口（选项或自动跳转） */
-export interface StoryNode {
-  id: NodeId;
-  lines: Line[];
-  /** 进入节点时应用的效果 */
-  onEnter: Effect[];
-  /** 分支选项；若为空则用 next 自动推进 */
-  choices: Choice[];
-  /** 无选项时的自动跳转目标；null 表示停在节点等待（通常为结局前置） */
-  next: NodeId | null;
-}
-
-/** 角色定义 */
-export interface StoryChar {
-  id: CharId;
-  /** 展示名 */
-  name: string;
-  /** 不可死亡（如艾玛），会拦截 kill 效果 */
-  immortal: boolean;
-  /** 立绘/头像资源键，当前仅占位，后续接原作图片 */
-  asset?: string;
-}
-
-/** 结局定义：条件命中即触发 */
-export interface Ending {
-  id: EndingId;
-  title: string;
+export interface Option {
+  key: string;
   text: string;
-  when: Condition;
-  /** 优先级：多个结局同时命中时取数值大者 */
-  priority: number;
+  echo: Block[];
+  effects: Effect[];
+  to?: string;
 }
 
-/** 一个完整剧情（编译产物） */
+/** 节点如何继续 */
+export type Next =
+  | { kind: 'goto'; to: string }
+  | { kind: 'choice'; id: string; prompt: string; options: Option[] }
+  | { kind: 'route'; rules: { when: Expr; to: string }[]; else: string }
+  | { kind: 'ending'; id: string };
+
+/** 一个节点（对应一个 md 小节） */
+export interface Node {
+  id: string;
+  chapter: number;
+  /** 小节标题（`## S1　在恶人堆里醒来` 的后半段） */
+  title: string;
+  blocks: Block[];
+  next: Next;
+}
+
+/** 章索引：story.json 里的 chapters 字段 */
+export interface ChapterMeta {
+  n: number;
+  title: string;
+  file: string;
+  nodes: string[];
+}
+
+/** 编译产物：播放器只读它 */
 export interface Story {
-  meta: {
-    id: string;
-    title: string;
-    /**  contributing 源文件名（调试用） */
-    sources: string[];
-  };
-  chars: Record<CharId, StoryChar>;
-  facts: Record<FactId, { label?: string }>;
-  entry: NodeId;
-  nodes: Record<NodeId, StoryNode>;
-  endings: Ending[];
+  version: 1;
+  start: string;
+  vars: VarDefs;
+  facts: FactDefs;
+  nodes: Record<string, Node>;
+  chapters: ChapterMeta[];
 }
 
-/**
- * 运行时游戏状态（可 JSON 序列化，用于存档）。
- * knowledge 用普通数组而非 Set，保证可序列化。
- */
-export interface GameState {
-  storyId: string;
-  currentNodeId: NodeId;
-  /** 角色 -> 已知事实集合 */
-  knowledge: Record<CharId, FactId[]>;
-  /** 角色 -> 是否存活（缺省视为存活） */
-  alive: Record<CharId, boolean>;
-  /** 通用开关 */
-  flags: Record<FlagName, boolean | number | string>;
-  /** 关系档位，键为 "a|b"（按字典序归一） */
-  relationships: Record<string, number>;
-  /** 对某角色的探索度 */
-  exploration: Record<CharId, number>;
-  /** 已访问节点历史（回退用，存快照） */
-  history: GameStateSnapshot[];
-  /** 命中的结局（null 表示进行中） */
-  ended: EndingId | null;
-  /** 当前节点内已推进到的行指针（打字机/逐行显示用） */
-  lineIndex: number;
+/* ------------------------------------------------------------------ *
+ * 引擎运行态（AGENTS.md 第 7 节）
+ * 说明：除 { nodeId, cursor, vars, history } 外，另存 facts / rels，
+ * 用来承接选项的 know（谁知道了什么）与 rel（二元关系档位）。
+ * 这两项不参与条件判断（表达式只认 vars），仅供播放器展示与剧情推进。
+ * ------------------------------------------------------------------ */
+
+/** 历史记录：每次选择记一条，用于回退与剧情更新后的重放 */
+export interface HistoryEntry {
+  choiceId: string;
+  key: string;
 }
 
-/** 去掉 history 的历史快照，避免嵌套膨胀 */
-export type GameStateSnapshot = Omit<GameState, 'history'>;
+/** 引擎状态 */
+export interface EngineState {
+  /** 当前节点；空串表示「尚未进入任何节点」（开局） */
+  nodeId: string;
+  /** 已播放到本节点的第几段文字 */
+  cursor: number;
+  vars: Record<string, number>;
+  /** 信息差：键为 "角色\u0000事实" */
+  facts: Record<string, boolean>;
+  /** 二元关系档位：键为 "A|B" */
+  rels: Record<string, number>;
+  history: HistoryEntry[];
+}
 
-/** 引擎动作 */
-export type EngineAction =
-  | { type: 'advance' } // 前进一行 / 进入下一节点（无选项时）
-  | { type: 'choose'; choiceId: string }
-  | { type: 'rewind' } // 回退一步
-  | { type: 'restart' };
+/** step 的输入 */
+export type EngineInput = { type: 'advance' } | { type: 'choose'; key: string };
+
+/** 选择事件里给播放器的选项（不含效果/回响，播放器看不到内部数据） */
+export interface ChoiceOption {
+  key: string;
+  text: string;
+}
+
+/** 引擎发出的事件（AGENTS.md 第 7 节） */
+export type Event =
+  | { type: 'say'; text: string; speaker?: string }
+  | { type: 'showChoice'; id: string; prompt: string; options: ChoiceOption[] }
+  | { type: 'showEcho'; blocks: Block[] }
+  | { type: 'setBackground'; id: string }
+  | { type: 'showSprite'; id: string; slot: string }
+  | { type: 'hideSprite'; slot: string }
+  | { type: 'playBgm'; id: string }
+  | { type: 'stopBgm' }
+  | { type: 'chapterTitle'; n: number; title: string }
+  | { type: 'ending'; id: string };
+
+/** 存档 = 把状态序列化（AGENTS.md 第 7 节） */
+export interface SaveData {
+  v: 1;
+  storyHash: string;
+  nodeId: string;
+  cursor: number;
+  vars: Record<string, number>;
+  facts: Record<string, boolean>;
+  rels: Record<string, number>;
+  history: HistoryEntry[];
+}

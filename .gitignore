@@ -1,18 +1,9 @@
-node_modules
-dist
-dist-ssr
-*.local
+node_modules/
+dist/
 *.log
-.DS_Store
-.vite
-coverage
-tsconfig.tsbuildinfo
 
-# 全部 md 文件不入库（设定稿/大纲等仅本地保留）
-*.md
+# 播放器调试产物
+.playwright-mcp/
 
-# 验证/截图临时产物（避免误提交）
-/*.png
-/verify_*.png
-/.verify_*.png
-/step*.png
+# 素材（原作提取物）不入库，仅通过 assets.yaml 引用
+assets/
