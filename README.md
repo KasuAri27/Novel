@@ -27,7 +27,7 @@ public/story/story.json           播放器只读的编译产物
 src/engine/   纯 TS 引擎：step(state, input) → { state, events }
       │
       ▼
-src/player/   NVL 播放器（打字机 / 选项 / 回响 / 存读档 / 回退）
+src/player/   NVL/ADV 播放器（打字机 / 选项 / 回响 / 存读档 / 回退 / 背景交叉淡入 / 立绘）
 ```
 
 - 条件表达式不用 `eval`：编译成 JSON 语法树，由引擎解释执行。
@@ -70,5 +70,5 @@ docs/               写作格式规范、大纲、第四章逻辑笔记
 2. 在同目录写 `chNN.logic.yaml`（选项效果、路由、结局）；新变量登记进 `story/vars.yaml`；
 3. `npm run story:build` 编译，`npm run story:check` 校验通过后 `npm run dev` 游玩。
 
-> 素材（背景、立绘、音乐）通过 `assets.yaml` 引用，本体目录 `assets/` 不入库（见 AGENTS.md）。
-> 演出指令（立绘 / 背景 / 音乐）为后续里程碑（M7）。
+> 素材（背景、立绘）通过 `assets.yaml` 引用，本体目录 `public/backgrounds`、`public/portraits`、`public/ui` 不入库（见 AGENTS.md）。
+> 演出现状：立绘与背景已接入（M7 部分完成）；音乐 / BGM（`playBgm`）、Cut-in 等演出仍为后续里程碑。

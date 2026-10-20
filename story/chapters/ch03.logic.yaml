@@ -24,3 +24,11 @@ choices:
     A: { effects: [] }
     B: { effects: [] }
     C: { effects: [] }
+
+# 节级背景：小节 id → 背景 id（背景定义见 story/assets.yaml）
+backgrounds:
+  ch03_S1: hall
+  ch03_S2: cell_night
+  ch03_S3: infirmary
+  ch03_S4: wall_dusk
+  ch03_S5: corridor_dark

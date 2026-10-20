@@ -2,7 +2,7 @@
 #
 # 立绘来源：D:\AI_Project\manosaba-character-composer\portraits\（原作提取物，不入库），
 # 复制到 public/portraits/ 后使用。键 = 剧本里的说话人；值 = 文件名。
-# 之后要加背景、音乐时照此扩写，并在 build-story.ts 里合并进 story.json。
+# 其他素材（音乐等）照此扩写，并在 build-story.ts 里合并进 story.json。
 
 portraits:
   艾玛: ema.png
@@ -18,3 +18,23 @@ portraits:
   安安: anan.png
   诺亚: noah.png
   奈叶香: nanoka.png
+
+# 背景：id → 文件名（相对 public/backgrounds/）。
+# 来源：原游戏提取（manosaba-character-composer/_tmp_bg，1920×960 JPG q85），副本不入库。
+backgrounds:
+  cell_day: cell_day.jpg
+  cell_night: cell_night.jpg
+  hall: hall.jpg
+  corridor: corridor.jpg
+  library: library.jpg
+  garden: garden.jpg
+  courtyard: courtyard.jpg
+  wall_dusk: wall_dusk.jpg
+  infirmary: infirmary.jpg
+  corridor_night: corridor_night.jpg
+  corridor_dark: corridor_dark.jpg
+  door_closed: door_closed.jpg
+  door_open: door_open.jpg
+  court: court.jpg
+  court_bright: court_bright.jpg
+  chapel: chapel.jpg

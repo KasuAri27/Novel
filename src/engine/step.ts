@@ -107,6 +107,8 @@ export function createEngine(story: Story): Engine {
     if (node.chapter !== fromChapter) {
       events.push({ type: 'chapterTitle', n: node.chapter, title: chapterTitleOf(node.chapter) });
     }
+    // 节级背景：进入带背景的节点就通知播放器（同一 id 播放器自行去重）
+    if (node.bg) events.push({ type: 'setBackground', id: node.bg });
     if (node.blocks.length > 0) {
       events.push(sayOf(node.blocks[0]!));
       s.cursor = 1;

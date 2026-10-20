@@ -81,6 +81,8 @@ export interface Node {
   title: string;
   blocks: Block[];
   next: Next;
+  /** 节级背景 id（来自该章 logic.yaml 的 backgrounds；播放器据此切换背景） */
+  bg?: string;
 }
 
 /** 章索引：story.json 里的 chapters 字段 */
@@ -95,6 +97,8 @@ export interface ChapterMeta {
 export interface StoryAssets {
   /** 说话人 → 立绘文件名（相对 public/portraits/） */
   portraits: Record<string, string>;
+  /** 背景 id → 文件名（相对 public/backgrounds/） */
+  backgrounds: Record<string, string>;
 }
 
 /** 编译产物：播放器只读它 */

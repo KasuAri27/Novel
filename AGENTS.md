@@ -163,7 +163,10 @@ type Expr = object   // 条件的 JSON 语法树，由编译脚本生成
 > 编译现状（M6）：`npm run story:build` 由 `scripts/build-story.ts` 把 md + logic.yaml 编译成
 > `public/story/story.json`（校验在 `scripts/check-story.ts`，`npm run story:check`）。
 > 选项的 `effects` 来自 logic.yaml；路由（`route`）按 logic.yaml 的判定顺序执行，先匹配先生效。
-> 汇合收束文字**并入每个选项 `echo` 的尾部**。M1–M6 均已完成；M7（立绘、背景、音乐等演出指令）未做。
+> 汇合收束文字**并入每个选项 `echo` 的尾部**。
+>
+> **里程碑现状：M1–M6 已完成；M7 部分完成**——立绘、背景、说话人名字框已接入（见第 9 节），
+> 音乐（`playBgm` / `stopBgm`）与 Cut-in 等其余演出指令仍未做。
 
 ---
 
@@ -179,6 +182,9 @@ type Expr = object   // 条件的 JSON 语法树，由编译脚本生成
 
 **引擎发出的事件：**
 `say(text)`、`showChoice(options)`、`showEcho(blocks)`、`setBackground(id)`、`showSprite(id, slot)`、`hideSprite(slot)`、`playBgm(id)`、`stopBgm()`、`chapterTitle(title)`、`ending(id)`。
+
+> 实际发射情况（M7 部分完成）：引擎目前只发 `say` / `showChoice` / `showEcho` / `chapterTitle` / `ending` / `setBackground`。
+> `showSprite` / `hideSprite` / `playBgm` / `stopBgm` 仍只在 `types.ts` 里预留、引擎尚未发射：立绘由播放器依 `say` 的 `speaker` 自行驱动（`assets.portraits`），音乐未实现。
 
 ---
 
@@ -207,10 +213,15 @@ type Expr = object   // 条件的 JSON 语法树，由编译脚本生成
 - 存档读档（localStorage，3 个槽位加自动存档）、回退上一个选择。
 - 手机和电脑都能用。
 
+**已接入（M7 部分完成，素材经 `assets.yaml` 引用、编译进 `story.json`）：**
+
+- 说话人名字框、立绘：对白已带 `speaker`，播放器按 `assets.portraits`（来自 `story/assets.yaml`）淡入切换立绘，旁白时压暗；无立绘说话人只显示名字牌。
+- 背景：logic.yaml 的 `backgrounds:` 给节点标背景 id，引擎进节点发 `setBackground`，播放器双层交叉淡入 + 暗幕压光（`assets.backgrounds`）。
+
 **以后再做（现在不要做）：**
 
-- 说话人名字框、立绘（需要先给对白加说话人标记，可由 AI 离线标注、作者审核）。
-- 背景、音乐，素材通过 `assets.yaml` 引用。
+- 音乐 / BGM（`playBgm` / `stopBgm`）：manosaba 仓库无音频源，需另找素材。
+- Cut-in、辩论演出等更丰富的原版 UI 组件（`_tmp_ui` 里已抠好一批素材，尚未接入播放器）。
 - 换渲染器。
 
 ---
@@ -225,7 +236,7 @@ type Expr = object   // 条件的 JSON 语法树，由编译脚本生成
 | M4 | `story:check` 全部校验与全路径模拟 | 故意改坏数据时能正确报错 |
 | M5 | 引擎 `step`、存档、回退 | 单元测试覆盖选项、路由、存档读档 |
 | M6 | 播放器（NVL） | 能从头玩到某个结局 |
-| M7 | 演出指令、素材、说话人（以后） | 另行讨论 |
+| M7 | 演出指令、素材、说话人 | **部分完成**：立绘 / 背景 / 名字框已接入；音乐（`playBgm`）、Cut-in 未做 |
 
 **每个里程碑做完，按这个格式汇报：** 改了哪些文件 / 怎么运行 / 还有什么没解决。
 

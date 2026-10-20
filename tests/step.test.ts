@@ -118,6 +118,17 @@ describe('引擎 step 基本推进', () => {
     expect(ev.id).toBe('E01');
     expect(ev.options.map((o) => o.key)).toEqual(['A', 'B']);
   });
+
+  it('进入带背景的节点会发 setBackground（章节标题之后、正文之前）', () => {
+    const story = makeStory();
+    story.nodes.c1a!.bg = 'cell_day';
+    const eng = createEngine(story);
+    const r = eng.step(eng.initialState(), { type: 'advance' });
+    expect(types(r.events)).toEqual(['chapterTitle', 'setBackground', 'say']);
+    const ev = r.events.find((e) => e.type === 'setBackground');
+    if (ev?.type !== 'setBackground') throw new Error('bad');
+    expect(ev.id).toBe('cell_day');
+  });
 });
 
 describe('选择、效果与路由', () => {

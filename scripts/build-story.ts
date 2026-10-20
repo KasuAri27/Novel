@@ -42,6 +42,8 @@ const LogicSchema = z
       .optional(),
     // endings 的键是“作为章末终结点的小节 id”，值是结局编号。
     endings: z.record(z.string(), z.string()).optional(),
+    // backgrounds 的键是“小节 id”，值是 story/assets.yaml 里声明的背景 id（节级背景）。
+    backgrounds: z.record(z.string(), z.string()).optional(),
   })
   .optional();
 
@@ -49,13 +51,15 @@ interface Logic {
   effects: Record<string, Record<string, Effect[]>>;
   routes: Record<string, { kind: 'route'; rules: { when: Expr; to: string }[]; else: string }>;
   endings: Record<string, string>;
+  /** 节级背景：节点 id → 背景 id */
+  backgrounds: Record<string, string>;
   /** 选择编号 → logic.yaml 里写的选项键（原样保留，供校验双向比对） */
   choiceKeys: Record<string, string[]>;
 }
 
 /** 读一章的 logic.yaml（可缺省）；when 字符串编译成表达式语法树；出错时带上文件名 */
 function loadLogic(chapterNo: number): Logic {
-  const out: Logic = { effects: {}, routes: {}, endings: {}, choiceKeys: {} };
+  const out: Logic = { effects: {}, routes: {}, endings: {}, backgrounds: {}, choiceKeys: {} };
   const fileName = `ch${String(chapterNo).padStart(2, '0')}.logic.yaml`;
   const file = resolve(ROOT, 'story', 'chapters', fileName);
   let text: string;
@@ -97,12 +101,13 @@ function loadLogic(chapterNo: number): Logic {
     }
   }
   if (data?.endings) Object.assign(out.endings, data.endings);
+  if (data?.backgrounds) Object.assign(out.backgrounds, data.backgrounds);
   return out;
 }
 
 /** 读取素材清单 story/assets.yaml（可缺省；缺文件时给空表） */
 function loadAssets(): StoryAssets {
-  const out: StoryAssets = { portraits: {} };
+  const out: StoryAssets = { portraits: {}, backgrounds: {} };
   const file = resolve(ROOT, 'story', 'assets.yaml');
   let text: string;
   try {
@@ -110,7 +115,7 @@ function loadAssets(): StoryAssets {
   } catch {
     return out;
   }
-  const schema = z.object({ portraits: z.record(z.string(), z.string()).optional() });
+  const schema = z.object({ portraits: z.record(z.string(), z.string()).optional(), backgrounds: z.record(z.string(), z.string()).optional() });
   let data: z.infer<typeof schema>;
   try {
     data = schema.parse(parseYaml(text) ?? {});
@@ -122,6 +127,7 @@ function loadAssets(): StoryAssets {
     throw new Error(`assets.yaml 不是合法 YAML：${(e as Error).message}`);
   }
   if (data.portraits) out.portraits = data.portraits;
+  if (data.backgrounds) out.backgrounds = data.backgrounds;
   return out;
 }
 
@@ -332,7 +338,7 @@ function build(): { story: Story; meta: CheckMeta; parseWarnings: string[] } {
   const effects: Record<string, Record<string, Effect[]>> = {};
   const routes: Record<string, { kind: 'route'; rules: { when: Expr; to: string }[]; else: string }> = {};
   const endings: Record<string, string> = {};
-  const meta: CheckMeta = { parsedNodeIds: [], logicChoiceIds: [], logicChoiceKeys: {}, chapterChars: {} };
+  const meta: CheckMeta = { parsedNodeIds: [], logicChoiceIds: [], logicChoiceKeys: {}, chapterChars: {}, logicBackgrounds: {} };
   const parseWarnings: string[] = [];
 
   for (const file of CHAPTER_FILES) {
@@ -347,6 +353,7 @@ function build(): { story: Story; meta: CheckMeta; parseWarnings: string[] } {
     Object.assign(effects, logic.effects);
     Object.assign(routes, logic.routes);
     Object.assign(endings, logic.endings);
+    Object.assign(meta.logicBackgrounds, logic.backgrounds);
     for (const [cid, keys] of Object.entries(logic.choiceKeys)) {
       meta.logicChoiceIds.push(cid);
       meta.logicChoiceKeys[cid] = keys;
@@ -400,6 +407,11 @@ function build(): { story: Story; meta: CheckMeta; parseWarnings: string[] } {
   });
 
   for (const s of synthetic) nodes[s.id] = { id: s.id, chapter: s.chapter, title: '', blocks: [], next: s.next };
+
+  // 节级背景：把各章 logic.yaml 的映射写到真实节点上（找不到的节点由校验报错）
+  for (const [nid, bg] of Object.entries(meta.logicBackgrounds)) {
+    if (nodes[nid]) nodes[nid].bg = bg;
+  }
 
   const story: Story = { version: 1, start: ordered[0]!.id, vars, facts: {}, nodes, chapters, assets: loadAssets() };
   meta.parsedNodeIds = ordered.map((x) => x.id);

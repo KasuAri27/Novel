@@ -1,6 +1,7 @@
 /* 播放器样式：Dark Theatrical 暗黑剧场
    —— 深靛黑舞台 + 金色聚光 + 血红 accent + 日式衬线（宋体系）。
    立绘层：.sprites/.sprite（speaker → story.assets.portraits 映射，淡入切换，旁白时压暗）。
+   背景层：.bg-wrap/.bg-layer/.bg-veil（setBackground 双层交叉淡入 + 暗幕压光）。
    设计要点：磨砂玻璃面板、只用 transform/opacity 做动效、reduced-motion 兜底、
    触控目标 ≥44px、focus-visible 金色描边。 */
 :root {
@@ -52,21 +53,54 @@ body {
     linear-gradient(165deg, #12102a 0%, var(--bg) 45%, var(--bg-deep) 100%);
 }
 
-/* 背景：舞台灯 + 幕布纹理 + 暗角 */
-.bg {
+/* 背景：舞台灯 + 幕布纹理（没有背景图时的兜底） */
+.bg-wrap {
   position: absolute;
   inset: 0;
   z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
   background:
     radial-gradient(90% 70% at 50% 110%, rgba(143, 29, 29, 0.13), transparent 62%),
     repeating-linear-gradient(115deg, rgba(255, 255, 255, 0.012) 0 2px, transparent 2px 7px);
 }
 
-.bg::after {
-  content: "";
+/* 背景图层：两层叠放交叉淡入。新图从暗处“点亮”、轻微推近，
+   让场景变化像一次打光而不是硬切。 */
+.bg-layer {
   position: absolute;
   inset: 0;
-  background: radial-gradient(130% 100% at 50% 42%, transparent 52%, rgba(4, 3, 10, 0.62) 100%);
+  background-position: center;
+  background-size: cover;
+  opacity: 0;
+  transform: scale(1.045);
+  filter: saturate(0.72) brightness(0.55);
+  transition:
+    opacity 0.9s ease,
+    transform 2.6s cubic-bezier(0.19, 0.62, 0.26, 1),
+    filter 1.6s ease;
+  will-change: opacity, transform;
+}
+
+.bg-layer.show {
+  opacity: 1;
+  transform: scale(1);
+  filter: saturate(0.92) brightness(0.8);
+}
+
+/* 暗幕：上下渐变压暗 + 外圈暗角，保证文字与立绘永远可读 */
+.bg-veil {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(120% 90% at 50% 38%, transparent 40%, rgba(6, 5, 12, 0.66) 100%),
+    linear-gradient(
+      180deg,
+      rgba(8, 7, 16, 0.62),
+      rgba(8, 7, 16, 0.08) 32%,
+      rgba(8, 7, 16, 0.08) 58%,
+      rgba(10, 9, 18, 0.78) 100%
+    );
 }
 
 /* ---- 立绘层 ---- */
@@ -163,110 +197,168 @@ body {
   align-items: center;
   justify-content: center;
   gap: 18px;
+  overflow-y: auto;
+  padding: 28px 20px;
+  text-align: center;
   background:
     radial-gradient(60% 60% at 50% 45%, rgba(201, 162, 75, 0.06), transparent 70%),
     rgba(6, 5, 12, 0.9);
 }
 
-.title-overlay .en {
-  font-size: 13px;
-  letter-spacing: 0.5em;
+.title-overlay .chapter-no {
+  font-size: 17px;
+  letter-spacing: 0.16em;
   color: var(--gold);
 }
 
 .title-overlay .cn {
   font-family: var(--font-serif);
   font-size: clamp(32px, 6vw, 60px);
-  letter-spacing: 0.28em;
+  line-height: 1.35;
+  letter-spacing: 0.12em;
   color: var(--blood-lt);
   text-shadow:
     0 0 44px rgba(194, 58, 47, 0.45),
     0 0 90px rgba(143, 29, 29, 0.3);
 }
 
-/* 对白框：磨砂玻璃 + 金边 + 左侧聚光金线 */
-.dialog {
-  position: absolute;
-  left: 4%;
-  right: 4%;
-  bottom: 4%;
-  min-height: 26%;
-  background: var(--box);
-  backdrop-filter: blur(14px) saturate(140%);
+.title-overlay .continue {
+  margin-top: 14px;
+  padding: 11px 30px;
+  min-height: 48px;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 30px 34px 26px;
-  z-index: 10;
-  box-shadow: 0 18px 60px rgba(3, 3, 8, 0.55);
-}
-
-.dialog::before {
-  content: "";
-  position: absolute;
-  left: -1px;
-  top: 14px;
-  bottom: 14px;
-  width: 2px;
-  background: linear-gradient(180deg, var(--gold), transparent);
-}
-
-/* 顶边中央的金色饰线 */
-.dialog::after {
-  content: "";
-  position: absolute;
-  top: -1px;
-  left: 50%;
-  width: 88px;
-  height: 2px;
-  transform: translateX(-50%);
-  background: linear-gradient(90deg, transparent, var(--gold-lt), transparent);
-}
-
-.dialog .name {
-  position: absolute;
-  top: -18px;
-  left: 26px;
-  background: linear-gradient(180deg, var(--panel-lt), #100f1f);
-  border: 1px solid rgba(201, 162, 75, 0.5);
   border-radius: 8px;
-  padding: 6px 22px;
-  font-family: var(--font-serif);
-  font-size: 20px;
-  letter-spacing: 0.22em;
+  background: rgba(15, 14, 26, 0.78);
+  color: var(--ink);
+  font: inherit;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.title-overlay .continue:hover {
   color: var(--gold-lt);
-  text-shadow: 0 0 18px rgba(201, 162, 75, 0.35);
+  border-color: var(--gold);
 }
 
-.dialog .text {
-  font-family: var(--font-serif);
-  font-size: clamp(17px, 2.1vw, 25px);
-  line-height: 1.9;
-  max-width: 44em;
-  white-space: pre-wrap;
-}
-
-.dialog .text.hidden {
-  visibility: hidden;
-}
-
-/* 推进提示 ▼ */
-.cue {
+/* 底部对白栏：原版游戏 ADV 素材（2560×797 框体 / 601×289 名字牌 / 输入指示）
+   坐标来自游戏预制体 RectTransform（以 2560×1440 为基准换算到框体百分比）。 */
+.adv {
   position: absolute;
-  right: 26px;
-  bottom: 16px;
-  color: var(--gold);
-  font-size: 18px;
-  animation: bob 1.4s ease-in-out infinite;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  aspect-ratio: 2560 / 797;
+  max-height: 58vh;
+  z-index: 10;
+  pointer-events: none;
 }
 
-.cue.hidden {
+/* 垫底渐变幕：把画面往底部压暗（几乎不可见，只垫氛围） */
+.adv-screen {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: auto;
+  opacity: 0.92;
+  z-index: 0;
+}
+
+/* 墨浪框体 */
+.adv-frame {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+}
+
+/* 名字牌：菱形牌中心 x=641/2560、距底 394/1440（换算到框体 13.3% / 31.3%） */
+.adv-name {
+  position: absolute;
+  left: 13.3%;
+  bottom: 31.3%;
+  width: 23.48%;
+  height: auto;
+  z-index: 2;
+}
+
+/* 名字文字：原作 AuthorLabel 区（1000×160，中心 x=928、距底 408） */
+.adv-name-text {
+  position: absolute;
+  left: 16.7%;
+  bottom: 41.2%;
+  width: 39.1%;
+  height: 20.1%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-serif);
+  font-size: clamp(15px, 2.05vw, 40px);
+  letter-spacing: 0.12em;
+  color: #f7eee0;
+  text-shadow: 0 1px 2px rgba(18, 10, 12, 0.92), 0 0 16px rgba(12, 6, 10, 0.65);
+  z-index: 3;
+}
+
+/* 正文：x 573..1987、底边距 77（相对框体），文字向上生长 */
+.adv-text {
+  position: absolute;
+  left: 22.4%;
+  width: 55.2%;
+  bottom: 9.7%;
+  max-height: 42%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  font-family: var(--font-serif);
+  font-size: clamp(16px, var(--reader-font-size, 22px), 34px);
+  line-height: var(--reader-line-height, 1.9);
+  color: #f4ebd9;
+  text-shadow: 0 1px 2px rgba(10, 6, 8, 0.9), 0 0 12px rgba(10, 6, 8, 0.5);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  pointer-events: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(201, 162, 75, 0.4) transparent;
+  z-index: 2;
+}
+
+/* 旁白不显示名字牌（原作 AuthorPanel 仅在有说话人时出现） */
+.adv.narration .adv-name,
+.adv.narration .adv-name-text {
   display: none;
 }
 
-@keyframes bob {
+/* 推进指示（原作 InputIndicator 85×75） */
+.adv-cue {
+  position: absolute;
+  left: 82.6%;
+  bottom: 3.4%;
+  width: 3.32%;
+  z-index: 2;
+  animation: cuepulse 1.5s ease-in-out infinite;
+}
+
+.adv-cue img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.adv-cue.hidden {
+  display: none;
+}
+
+@keyframes cuepulse {
+  0%, 100% {
+    opacity: 0.95;
+    transform: translateY(0);
+  }
   50% {
-    transform: translateY(5px);
-    opacity: 0.5;
+    opacity: 0.35;
+    transform: translateY(3px);
   }
 }
 
@@ -278,64 +370,94 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 16px;
-  padding: 4%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: clamp(64px, 9vh, 100px) 24px 32px;
   background: radial-gradient(60% 60% at 50% 50%, rgba(7, 6, 15, 0.62), rgba(7, 6, 15, 0.16));
+}
+
+.choices .prompt,
+.choices .choice-status,
+.choices button {
+  width: min(680px, 100%);
+  align-self: center;
+}
+
+.choices > * {
+  flex-shrink: 0;
 }
 
 .choices .prompt {
   font-family: var(--font-serif);
   font-size: clamp(18px, 2.2vw, 24px);
   letter-spacing: 0.08em;
-  margin-bottom: 6px;
+  margin-top: auto;
   color: var(--ink);
   text-shadow: 0 2px 10px #000;
 }
 
+.choices .choice-status {
+  margin-top: -8px;
+  color: var(--gold);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+}
+
 .choices button {
-  width: min(620px, 92%);
   text-align: left;
-  background: linear-gradient(90deg, rgba(27, 27, 48, 0.92), rgba(27, 27, 48, 0.72));
-  backdrop-filter: blur(10px) saturate(130%);
-  border: 1px solid var(--line);
-  border-left: 3px solid var(--blood-lt);
-  border-radius: 10px;
-  padding: 15px 22px;
-  min-height: 48px;
-  color: var(--ink);
-  font-family: inherit;
+  /* 原版选项框贴图：浅羊皮纸=默认，血红=高亮（见 :hover）。
+     9 宫格 border-image 保住两端卷纹、只拉伸中间羊皮纸带。
+     按钮高度接近原图比例（~110px），两行字也能落在亮纸带内。 */
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border-style: solid;
+  border-width: 24px 66px;
+  border-image: url("ui/adv/choice_default.png") 44 160 44 160 fill / 24px 66px stretch;
+  padding: 0 10px;
+  min-height: 112px;
+  color: #2a1c1a; /* 浅框上的深字 */
+  font-family: var(--font-serif);
   font-size: clamp(15px, 1.6vw, 19px);
   line-height: 1.5;
   cursor: pointer;
   touch-action: manipulation;
-  transition: 0.16s ease;
+  transition: filter 0.16s ease, transform 0.16s ease;
 }
 
-.choices button:hover {
+.choices button .t {
+  flex: 1;
+  min-width: 0;
+}
+
+.choices button:last-child {
+  margin-bottom: auto;
+}
+
+.choices button:hover,
+.choices button:focus-visible {
+  border-image-source: url("ui/adv/choice_highlight.png");
+  color: #f7eee0; /* 红框上的浅字 */
   transform: translateX(6px);
-  border-color: var(--gold);
-  box-shadow: 0 0 28px rgba(201, 162, 75, 0.16);
 }
 
 .choices button .k {
   font-family: var(--font-serif);
-  color: var(--gold-lt);
+  color: var(--blood);
   font-size: 1.15em;
   margin-right: 12px;
 }
 
-/* 底部提示 */
+.choices button:hover .k,
+.choices button:focus-visible .k {
+  color: var(--gold-lt);
+}
+
+/* 原版没有文字提示，推进指示由栏内图标承担 */
 .hint {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 1.2%;
-  text-align: center;
-  font-size: 11px;
-  letter-spacing: 0.3em;
-  color: var(--muted);
-  z-index: 5;
+  display: none;
 }
 
 /* 结局页 */
@@ -395,7 +517,9 @@ body {
   z-index: 40;
   background: rgba(6, 5, 12, 0.94);
   backdrop-filter: blur(6px);
-  padding: 5% 6%;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: clamp(20px, 5%, 64px) clamp(18px, 6%, 84px);
   display: flex;
   flex-direction: column;
   gap: 18px;
@@ -418,6 +542,11 @@ body {
 }
 
 .savelayer .slot {
+  display: block;
+  width: 100%;
+  color: var(--ink);
+  font-family: inherit;
+  text-align: left;
   background: rgba(27, 27, 48, 0.85);
   border: 1px solid rgba(201, 162, 75, 0.22);
   border-radius: 10px;
@@ -426,9 +555,14 @@ body {
   transition: 0.18s ease;
 }
 
-.savelayer .slot:hover {
+.savelayer .slot:hover:not(:disabled) {
   border-color: var(--gold);
   box-shadow: 0 0 22px rgba(201, 162, 75, 0.16);
+}
+
+.savelayer .slot:disabled {
+  cursor: default;
+  opacity: 0.72;
 }
 
 .savelayer .slot.auto {
@@ -460,6 +594,95 @@ body {
   color: var(--muted);
 }
 
+.savelayer .slot .summary {
+  display: -webkit-box;
+  margin-top: 9px;
+  color: var(--muted);
+  font-family: var(--font-serif);
+  font-size: 12px;
+  line-height: 1.6;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.panel-status {
+  min-height: 1.4em;
+  color: var(--gold-lt);
+  font-size: 13px;
+}
+
+.menu-actions,
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: min(680px, 100%);
+}
+
+.menu-action {
+  min-height: 52px;
+  padding: 12px 18px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(27, 27, 48, 0.85);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.menu-action:hover {
+  border-color: var(--gold);
+  color: var(--gold-lt);
+}
+
+.setting-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  border: 1px solid rgba(201, 162, 75, 0.22);
+  border-radius: 8px;
+  background: rgba(27, 27, 48, 0.7);
+}
+
+.setting-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 14px;
+}
+
+.setting-value {
+  color: var(--gold-lt);
+  font-variant-numeric: tabular-nums;
+}
+
+.setting-row input[type="range"] {
+  width: 100%;
+  accent-color: var(--gold);
+}
+
+.setting-row input[type="checkbox"] {
+  width: 22px;
+  height: 22px;
+  accent-color: var(--gold);
+}
+
+.setting-toggle {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.panel-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: auto;
+}
+
 .savelayer .close {
   align-self: flex-end;
   margin-top: auto;
@@ -482,9 +705,16 @@ body {
   border-color: var(--gold);
 }
 
+.panel-actions .close {
+  align-self: auto;
+  margin-top: 0;
+}
+
 /* 键盘可见焦点（WCAG：不得去掉 outline 而不给替代） */
 button:focus-visible,
-.slot:focus-visible {
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
   outline: 2px solid var(--gold-lt);
   outline-offset: 2px;
 }
@@ -493,9 +723,37 @@ button:focus-visible,
   display: none !important;
 }
 
+/* 暗色细滚动条仍保留足够对比度和可拖动宽度。 */
+.adv-text,
+.choices,
+.savelayer {
+  scrollbar-color: rgba(201, 162, 75, 0.58) rgba(15, 14, 26, 0.62);
+  scrollbar-width: thin;
+}
+
+.adv-text::-webkit-scrollbar,
+.choices::-webkit-scrollbar,
+.savelayer::-webkit-scrollbar {
+  width: 8px;
+}
+
+.adv-text::-webkit-scrollbar-track,
+.choices::-webkit-scrollbar-track,
+.savelayer::-webkit-scrollbar-track {
+  background: rgba(15, 14, 26, 0.62);
+}
+
+.adv-text::-webkit-scrollbar-thumb,
+.choices::-webkit-scrollbar-thumb,
+.savelayer::-webkit-scrollbar-thumb {
+  border: 2px solid rgba(15, 14, 26, 0.62);
+  border-radius: 8px;
+  background: rgba(201, 162, 75, 0.58);
+}
+
 /* 尊重系统「减少动态效果」 */
 @media (prefers-reduced-motion: reduce) {
-  .cue {
+  .adv-cue {
     animation: none;
   }
   .choices button:hover {
@@ -508,19 +766,38 @@ button:focus-visible,
 
 /* 手机适配 */
 @media (max-width: 640px) {
-  .dialog {
-    min-height: 32%;
-    padding: 24px 18px 20px;
+  /* 竖屏太窄，按宽度算高度会把字挤没：改成固定高度的矮栏，框体允许轻微纵向拉伸 */
+  .adv {
+    aspect-ratio: auto;
+    height: 34vh;
+    min-height: 210px;
   }
-  .dialog .name {
-    font-size: 17px;
-    padding: 5px 16px;
-    top: -16px;
-    left: 18px;
+  .adv-screen {
+    display: none;
   }
-  .dialog .text {
-    font-size: clamp(16px, 4.4vw, 19px);
-    line-height: 1.85;
+  .adv-name {
+    left: 6%;
+    bottom: 34%;
+    width: 34%;
+  }
+  .adv-name-text {
+    left: 12%;
+    bottom: 42%;
+    width: 56%;
+    height: 24%;
+    font-size: clamp(15px, 4.6vw, 26px);
+  }
+  .adv-text {
+    left: 12%;
+    width: 76%;
+    bottom: 10%;
+    max-height: 54%;
+    font-size: clamp(15px, var(--reader-font-size, 18px), 26px);
+  }
+  .adv-cue {
+    left: 84%;
+    bottom: 5%;
+    width: 6%;
   }
   .toolbar {
     top: 10px;
@@ -535,16 +812,39 @@ button:focus-visible,
   .sprite {
     height: 88%;
   }
+  .choices {
+    padding: 64px 16px 28px;
+  }
   .choices button {
-    padding: 13px 16px;
+    border-width: 18px 42px;
+    border-image-slice: 44 160 44 160;
+    border-image-width: 18px 42px;
+    min-height: 88px;
+    padding: 0 6px;
   }
   .title-overlay .cn {
-    letter-spacing: 0.18em;
+    letter-spacing: 0.08em;
   }
   .savelayer {
     padding: 7% 5%;
   }
   .savelayer .slots {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-height: 640px) {
+  .adv {
+    max-height: 54vh;
+  }
+  .choices {
+    padding-top: 58px;
+    padding-bottom: 24px;
+  }
+  .title-overlay {
+    gap: 10px;
+  }
+  .title-overlay .cn {
+    font-size: clamp(28px, 5vh, 48px);
   }
 }

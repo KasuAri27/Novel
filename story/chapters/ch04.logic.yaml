@@ -34,3 +34,16 @@ endings:
   ch04_S-A3: END_ch04_3p
   ch04_S-B2: END_ch04_shiro
   ch04_S-C2: END_ch04_meruru
+
+# 节级背景：小节 id → 背景 id（背景定义见 story/assets.yaml）
+backgrounds:
+  ch04_S0: hall
+  ch04_S-D1: hall
+  ch04_S-D2: door_open
+  ch04_S-A1: courtyard
+  ch04_S-A2: court
+  ch04_S-A3: chapel
+  ch04_S-B1: wall_dusk
+  ch04_S-B2: wall_dusk
+  ch04_S-C1: infirmary
+  ch04_S-C2: court_bright

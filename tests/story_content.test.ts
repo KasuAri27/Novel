@@ -53,6 +53,18 @@ describe('story.json 内容', () => {
   it('起点与第一章首节一致', () => {
     expect(story.start).toBe('ch01_S1');
   });
+
+  it('每个实体节点都有背景，且背景定义齐全（16 张）', () => {
+    const defs = story.assets?.backgrounds ?? {};
+    expect(Object.keys(defs).length).toBe(16);
+    const nodeList = Object.values(story.nodes).filter(
+      (n) => !n.id.endsWith('__route') && !n.id.endsWith('__end'),
+    );
+    for (const n of nodeList) {
+      expect(n.bg, `节点 ${n.id} 缺背景`).toBeTruthy();
+      expect(defs[n.bg!], `背景 ${n.bg} 未定义`).toBeTruthy();
+    }
+  });
 });
 
 describe('第四章四条路由各自可达', () => {

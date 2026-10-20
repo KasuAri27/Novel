@@ -58,7 +58,13 @@ function makeMeta(story: Story): CheckMeta {
   }
   const chapterChars: Record<number, number> = {};
   for (const c of story.chapters) chapterChars[c.n] = 22000;
-  return { parsedNodeIds: Object.keys(story.nodes), logicChoiceIds, logicChoiceKeys, chapterChars };
+  return {
+    parsedNodeIds: Object.keys(story.nodes),
+    logicChoiceIds,
+    logicChoiceKeys,
+    chapterChars,
+    logicBackgrounds: {},
+  };
 }
 
 /** 在 ch01_S2 处放一个三选项选择（回响完整、都有去向），供选择同步/效果校验用 */
@@ -190,6 +196,28 @@ describe('checkStory 坏数据', () => {
     const { problems, warnings } = checkStory(story, meta);
     expect(problems).toEqual([]);
     expect(warnings.some((w) => w.includes('第 1 章'))).toBe(true);
+  });
+
+  it('背景映射指向不存在的节点 / 未定义的背景都会被报出来', () => {
+    const story = makeStory();
+    const meta = makeMeta(story);
+    meta.logicBackgrounds = { ch01_NOPE: 'cell_day', ch01_S1: 'no_such_bg' };
+    const { problems } = checkStory(story, meta);
+    expect(problems.some((p) => p.includes('ch01_NOPE'))).toBe(true);
+    expect(problems.some((p) => p.includes('no_such_bg'))).toBe(true);
+  });
+
+  it('背景映射正常时不报问题，声明了但没用到的背景只提示', () => {
+    const story = makeStory();
+    story.assets = {
+      portraits: {},
+      backgrounds: { cell_day: 'cell_day.jpg', unused_bg: 'unused_bg.jpg' },
+    };
+    const meta = makeMeta(story);
+    meta.logicBackgrounds = { ch01_S1: 'cell_day' };
+    const { problems, warnings } = checkStory(story, meta);
+    expect(problems).toEqual([]);
+    expect(warnings.some((w) => w.includes('unused_bg'))).toBe(true);
   });
 
   it('summarize 输出统计行', () => {

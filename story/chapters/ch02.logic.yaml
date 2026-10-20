@@ -28,3 +28,12 @@ choices:
     A: { effects: [] }
     B: { effects: [] }
     C: { effects: [] }
+
+# 节级背景：小节 id → 背景 id（背景定义见 story/assets.yaml）
+backgrounds:
+  ch02_S1: corridor
+  ch02_S2: library
+  ch02_S3: garden
+  ch02_S4: wall_dusk
+  ch02_S5: door_closed
+  ch02_S6: corridor_night

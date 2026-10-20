@@ -19,6 +19,8 @@ export interface CheckMeta {
   logicChoiceKeys: Record<string, string[]>;
   /** 各章正文字数（解析时统计；汇合收束只计一次） */
   chapterChars: Record<number, number>;
+  /** 各章 logic.yaml 里的节级背景：节点 id → 背景 id */
+  logicBackgrounds: Record<string, string>;
 }
 
 export interface CheckResult {
@@ -40,6 +42,7 @@ export function checkStory(story: Story, meta: CheckMeta): CheckResult {
   const warnings: string[] = [];
 
   checkNodeIds(meta, problems);
+  checkBackgrounds(story, meta, problems, warnings);
   checkChoiceSync(story, meta, problems, warnings);
   checkVarRefs(story, problems);
   checkNodes(story, problems, warnings);
@@ -82,6 +85,7 @@ export function summarize(story: Story, meta: CheckMeta): string[] {
     `效果数：${effects}`,
     `路由数：${routes}`,
     `结局数：${endings}`,
+    `背景：${Object.keys(story.assets?.backgrounds ?? {}).length} 个定义 / ${nodes.filter((n) => n.bg).length} 个节点使用`,
     '各章：' + story.chapters.map((c) => `${c.n}=${c.nodes.length}节点`).join(' '),
     '各章字数：' +
       story.chapters.map((c) => `${c.n}=${meta.chapterChars[c.n] ?? 0}`).join(' ') +
@@ -393,5 +397,26 @@ function checkChapterChars(story: Story, meta: CheckMeta, warnings: string[]): v
     if (chars < low || chars > high) {
       warnings.push(`第 ${ch.n} 章正文字数 ${chars}（目标 ${CHAPTER_CHARS_MIN}–${CHAPTER_CHARS_MAX}）`);
     }
+  }
+}
+
+/** 节级背景：键必须是真实小节 id，值必须在 assets.yaml 的 backgrounds 里声明 */
+function checkBackgrounds(story: Story, meta: CheckMeta, problems: string[], warnings: string[]): void {
+  const parsed = new Set(meta.parsedNodeIds);
+  const defs = story.assets?.backgrounds ?? {};
+  const used = new Set<string>();
+  for (const [nid, bgId] of Object.entries(meta.logicBackgrounds)) {
+    if (!parsed.has(nid)) {
+      problems.push(`背景映射的节点 ${nid} 在章节 md 里找不到（小节 id 打错？）`);
+      continue;
+    }
+    if (!(bgId in defs)) {
+      problems.push(`节点 ${nid} 的背景「${bgId}」在 story/assets.yaml 的 backgrounds 里没有定义`);
+      continue;
+    }
+    used.add(bgId);
+  }
+  for (const bgId of Object.keys(defs)) {
+    if (!used.has(bgId)) warnings.push(`背景「${bgId}」已在 assets.yaml 声明，但没有任何节点用到`);
   }
 }
