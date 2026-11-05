@@ -550,8 +550,11 @@ export function BookReader(p: Props) {
 
     if (!s.dragging) {
       const ratio = e.clientX / w;
-      if (ratio < 0.28) startFlip('prev');
-      else if (ratio > 0.72) startFlip('next');
+      if (ratio < 0.28) {
+        startFlip('prev');
+      } else if (perSpread === 1 || ratio > 0.72) {
+        startFlip('next');
+      }
       return;
     }
 

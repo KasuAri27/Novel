@@ -16,3 +16,14 @@ tsconfig.tsbuildinfo
 /verify_*.png
 /.verify_*.png
 /step*.png
+
+# 原作素材与大文件目录（按 AGENTS.md 约束不入库）
+public/backgrounds/
+public/portraits/
+public/profiles/
+public/ui/
+
+# 本地临时与工具文件
+.playwright-mcp/
+.qoder-credits/
+story/

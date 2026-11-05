@@ -1079,30 +1079,74 @@ button:disabled {
     display: none;
   }
   .leaf {
-    padding: 28px 22px 48px;
+    padding: 24px 20px 44px;
   }
   .book-shell .leaf {
-    padding-top: 44px;
+    padding-top: 36px;
   }
   .book-shell .leaf-pagenum {
-    left: 22px;
-    right: 22px;
+    left: 20px;
+    right: 20px;
   }
   /* 窄屏无选项时不要把空右栏挤掉正文 */
   .book-shell .book-spread:not(.has-choices) .leaf-right {
     display: none;
   }
+  /* 窄屏有选项时，正文自适应上半部，选项完全展开于下半部，告别挤压滚动 */
+  .book-shell .book-spread.has-choices {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+  .book-shell .book-spread.has-choices .leaf-left {
+    flex: 0 0 auto;
+    max-height: 38%;
+    padding-bottom: 8px;
+    overflow: hidden;
+  }
   .book-shell .book-spread.has-choices .leaf-right {
-    height: auto;
-    max-height: 46%;
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: none;
     padding-top: 0;
+    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  }
+  .book-shell .book-spread.has-choices .choices-pane {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-top: 4px;
+  }
+  .choices-kicker {
+    margin: 0 0 10px;
+    font-size: 11px;
+  }
+  .choices {
+    gap: 10px;
   }
   .choice-card {
-    min-height: 52px;
+    min-height: 48px;
+    padding: 12px 14px;
+    gap: 12px;
+    border-radius: 10px;
+    font-size: 14.5px;
+    line-height: 1.42;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .choice-letter {
+    font-size: 15px;
+    width: 1.2em;
   }
   .reader-progress {
     left: 20px;
     right: 20px;
+    bottom: max(8px, env(safe-area-inset-bottom, 0px));
+  }
+  .topbar {
+    padding-top: env(safe-area-inset-top, 0px);
   }
   .topbar-title {
     max-width: 42vw;
