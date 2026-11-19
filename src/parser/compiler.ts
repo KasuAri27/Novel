@@ -104,6 +104,10 @@ function parseFile(source: string, file: string): { ast: FileAst; errors: Compil
       } else if (name === 'char') {
         const positional = /^\S+=/.test(rest.trim()) ? '' : firstToken(rest);
         const attrs = parseAttrs(rest);
+        // 属性值后面跟着的开关词（如 `color=#fff me`）不算进值里
+        for (const k of Object.keys(attrs)) {
+          attrs[k] = attrs[k].replace(/(?:\s+(?:me|immortal))+$/, '');
+        }
         const id = attrs.id || positional;
         if (!id) err(no, '@char 需要给出角色名或 id=...');
         else
@@ -111,7 +115,10 @@ function parseFile(source: string, file: string): { ast: FileAst; errors: Compil
             id,
             name: attrs.name || id,
             immortal: /(?:^|\s)immortal(?=\s|$)/.test(rest),
-            asset: attrs.asset,
+            // avatar= 是聊天模式里更直白的写法，与 asset= 等价
+            asset: attrs.avatar || attrs.asset,
+            me: /(?:^|\s)me(?=\s|$)/.test(rest) || undefined,
+            color: attrs.color,
           });
       } else if (name === 'fact') {
         const id = firstToken(rest);
@@ -285,6 +292,12 @@ function assemble(g: Group): { story?: Story; errs: CompileError[] } {
       continue;
     }
     chars[c.id] = { id: c.id, name: c.name, immortal: c.immortal, asset: c.asset };
+    if (c.me) chars[c.id].me = true;
+    if (c.color) chars[c.id].color = c.color;
+  }
+  const meChars = Object.values(chars).filter((c) => c.me);
+  if (meChars.length > 1) {
+    err(0, `只能有一位主角（me），当前有：${meChars.map((c) => c.id).join('、')}`);
   }
 
   // 事实

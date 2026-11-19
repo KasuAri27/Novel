@@ -13,6 +13,8 @@ export interface CharDecl {
   name: string;
   immortal: boolean;
   asset?: string;
+  me?: boolean;
+  color?: string;
 }
 
 export interface FactDecl {

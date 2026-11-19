@@ -43,10 +43,10 @@ export function lex(source: string): Token[] {
   return tokens;
 }
 
-/** 解析 `key=value` 形式的属性（value 取 = 之后到行尾，允许空格） */
+/** 解析 `key=value` 形式的属性（value 可含空格，直到下一个 ` key=` 或行尾） */
 export function parseAttrs(rest: string): Record<string, string> {
   const attrs: Record<string, string> = {};
-  const re = /(\S+)=((?:[^=]|\s(?!\S+=))*)/g;
+  const re = /(\S+)=((?:(?!\s+\S+=).)*)/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(rest)) !== null) {
     attrs[m[1]] = m[2].trim();

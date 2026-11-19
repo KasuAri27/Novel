@@ -139,6 +139,9 @@ export function TitleScreen() {
           <button type="button" className="title-btn" onClick={() => setSettingsOpen(true)}>
             设置
           </button>
+          <button type="button" className="title-btn" onClick={() => (window.location.hash = 'chat')}>
+            聊天模式
+          </button>
         </div>
 
         <ImportDebugPanel errors={errors} />

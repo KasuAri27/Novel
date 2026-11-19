@@ -54,6 +54,8 @@ export const charSchema = z.object({
   name: z.string(),
   immortal: z.boolean(),
   asset: z.string().optional(),
+  me: z.boolean().optional(),
+  color: z.string().optional(),
 });
 
 export const endingSchema = z.object({

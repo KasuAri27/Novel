@@ -77,8 +77,12 @@ export interface StoryChar {
   name: string;
   /** 不可死亡（如艾玛），会拦截 kill 效果 */
   immortal: boolean;
-  /** 立绘/头像资源键，当前仅占位，后续接原作图片 */
+  /** 立绘/头像资源键（聊天模式下作为头像图片路径，相对 public/） */
   asset?: string;
+  /** 聊天模式：主角（气泡靠右，玩家选项以其口吻发出）。全剧至多一位 */
+  me?: boolean;
+  /** 聊天模式：头像底色 / 名字颜色（CSS 颜色值） */
+  color?: string;
 }
 
 /** 结局定义：条件命中即触发 */
