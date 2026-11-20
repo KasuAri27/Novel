@@ -7,6 +7,9 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   // 相对路径：构建产物可部署到任意静态目录（含 GitHub Pages 子路径 /Novel/）
   base: './',
+  // 显式绑定 IPv4 回环：默认 localhost 在本机会只监听 IPv6 [::1]，而 ::1 被系统拦截导致打不开
+  server: { host: '127.0.0.1', port: 5173 },
+  preview: { host: '127.0.0.1' },
   plugins: [
     react(),
     VitePWA({
