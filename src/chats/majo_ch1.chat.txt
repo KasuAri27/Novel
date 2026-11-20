@@ -3,7 +3,7 @@
 # 由 src/stories/majo_shinpan/chapter1.story.txt 转写：
 #   “台词”→ 角色气泡，其余 → 斜体描写，选项统一为（动作）
 # =====================================================
-@story id=majo_ch1 title=海平线的那一端
+@story id=majo_shinpan title=魔法少女的魔女审判
 @entry s0_breakfast
 
 @char 艾玛 me name=樱羽艾玛 avatar=profiles/ema.webp color=#e2558a
@@ -440,12 +440,12 @@
 @node ch1_e06_shirley
 > 我侧过身拉紧薄被。上铺传来翻身的微响，接着是一声很轻的吐息。
 > 初中的那场决裂，希罗到底为什么恨我恨到这种地步？既然现在被锁在同一间石室里，躲是躲不开的，明天总得找机会问出个头绪来。
+[goto] ch2_s0_router
 
 @node ch1_e06_tea
 > 我把梅露露塞给我的那小包干薄荷压在枕边。掌心能止血的浅绿微光、会客厅顶上那架重弩、还有走廊里铁壳包着的守卫……这栋宅邸不对劲的地方太多了。明天先去一层医务室帮梅露露搭把手，再去二层图书室翻翻旧书看能不能查出点什么。
+[goto] ch2_s0_router
 
 @node ch1_e06_shiro
 > 暮色里蕾雅悄悄留在长椅上的白纸，还有诺亚把纸抱在怀里的模样，一直晃在眼前。明天再去中庭看看她们吧，总比关在屋里一个人胡思乱想好。
-
-@end ch1_end
-title 第一章　海平线的那一端
+[goto] ch2_s0_router
