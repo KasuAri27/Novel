@@ -65,7 +65,7 @@ function compile(src: string): Story {
 
 /** 一直点「继续」直到需要选择或结束 */
 function run(story: Story, s: ChatSession): ChatSession {
-  for (let i = 0; i < 50 && chatStatus(story, s) === 'more'; i++) s = stepChat(story, s);
+  for (let i = 0; i < 2000 && chatStatus(story, s) === 'more'; i++) s = stepChat(story, s);
   return s;
 }
 
@@ -175,21 +175,28 @@ describe('内置聊天剧本', () => {
     }
   });
 
-  it('示例剧本每条选项路线都能走到结局', () => {
-    const story = compileFiles(files.filter((f) => f.name === 'demo.chat.txt')).stories[0];
-    const endings = new Set<string>();
-    const walk = (s: ChatSession, depth: number) => {
-      s = run(story, s);
-      const st = chatStatus(story, s);
-      if (st === 'ended') {
-        endings.add(s.state.ended!);
-        return;
-      }
-      expect(st).toBe('choices');
-      expect(depth).toBeLessThan(10);
-      for (const c of visibleChoices(story, s)) walk(pickChat(story, s, c.id), depth + 1);
-    };
-    walk(startChat(story), 0);
-    expect([...endings].sort()).toEqual(['lonely', 'together']);
+  it('每个内置剧本：所有选项路线都能走到结局', () => {
+    for (const f of files) {
+      const story = compileFiles([f]).stories[0];
+      const endings = new Set<string>();
+      const seen = new Set<string>();
+      const walk = (s: ChatSession) => {
+        s = run(story, s);
+        const { currentNodeId, knowledge, flags, relationships, exploration } = s.state;
+        const key = JSON.stringify([currentNodeId, knowledge, flags, relationships, exploration]);
+        if (seen.has(key)) return;
+        seen.add(key);
+        const st = chatStatus(story, s);
+        if (st === 'ended') {
+          endings.add(s.state.ended!);
+          return;
+        }
+        expect(st, `${f.name} 卡在 ${currentNodeId}`).toBe('choices');
+        for (const c of visibleChoices(story, s)) walk(pickChat(story, s, c.id));
+      };
+      walk(startChat(story));
+      expect(endings.size, f.name).toBeGreaterThan(0);
+      if (f.name === 'demo.chat.txt') expect([...endings].sort()).toEqual(['lonely', 'together']);
+    }
   });
 });

@@ -43,12 +43,15 @@ function saveSession(story: Story, session: ChatSession): void {
   }
 }
 
-export function hasSave(storyId: string): boolean {
-  try {
-    return localStorage.getItem(SAVE_PREFIX + storyId) !== null;
-  } catch {
-    return false;
+/** 列表页预览：有进度取最后一条台词/描写，没有则取开场第一行 */
+export function previewLine(story: Story): string {
+  const log = loadSession(story)?.log ?? [];
+  for (let i = log.length - 1; i >= 0; i--) {
+    const e = log[i];
+    if (e.kind === 'say' || e.kind === 'narr') return e.text;
+    if (e.kind === 'end') return e.title;
   }
+  return story.nodes[story.entry]?.lines[0]?.text ?? '';
 }
 
 interface ChatStore {
