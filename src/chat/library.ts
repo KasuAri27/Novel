@@ -1,6 +1,6 @@
 /**
  * 聊天剧本库：
- *   - 内置：src/chats 下所有 .chat.txt（构建时打包，和小说剧本分开编译，互不合并）；
+ *   - 内置：src/chats 下所有 .chat.txt（构建时打包；同 @story id 的多文件按文件名排序后合并编译，与小说剧本分开编译，互不合并）；
  *   - 导入：玩家在页面上选的本地 .txt，原文存进 localStorage，刷新后重新编译。
  * 导入的剧本与内置剧本 @story id 相同时，以导入的为准（方便作者改完直接预览）。
  */
@@ -26,10 +26,13 @@ const builtInRaw = import.meta.glob('/src/chats/**/*.chat.txt', {
 const IMPORTS_KEY = 'inov:chat:imports';
 
 function compileBuiltIn(): { stories: Story[]; errors: CompileError[] } {
-  const files = Object.entries(builtInRaw).map(([name, source]) => ({
-    name,
-    source: source as string,
-  }));
+  // 按文件名排序，确保分章文件（如 majo_ch1..ch4）顺序稳定，首章提供 @story meta 与 @entry
+  const files = Object.entries(builtInRaw)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([name, source]) => ({
+      name,
+      source: source as string,
+    }));
   return compileFiles(files);
 }
 

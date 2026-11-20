@@ -6,10 +6,16 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { compileFiles, compileStory } from '../src/parser/compiler';
-import type { Story } from '../src/engine/types';
+import { createInitialState } from '../src/engine/state';
+import { advance, availableChoices, choose } from '../src/engine/reducer';
+import { resolveEnding } from '../src/engine/ending';
+import type { GameState, Story } from '../src/engine/types';
+import { builtIn } from '../src/chat/library';
 import {
   chatStatus,
   classifyChoice,
+  isAutoChoice,
+  meId,
   pickChat,
   splitActions,
   startChat,
@@ -65,7 +71,7 @@ function compile(src: string): Story {
 
 /** 一直点「继续」直到需要选择或结束 */
 function run(story: Story, s: ChatSession): ChatSession {
-  for (let i = 0; i < 2000 && chatStatus(story, s) === 'more'; i++) s = stepChat(story, s);
+  for (let i = 0; i < 5000 && chatStatus(story, s) === 'more'; i++) s = stepChat(story, s);
   return s;
 }
 
@@ -161,42 +167,219 @@ describe('聊天会话', () => {
   });
 });
 
-describe('内置聊天剧本', () => {
-  const dir = join(__dirname, '../src/chats');
-  const files = readdirSync(dir)
-    .filter((n) => n.endsWith('.chat.txt'))
-    .map((n) => ({ name: n, source: readFileSync(join(dir, n), 'utf-8') }));
+function collectChatFiles(dir: string, prefix = ''): Array<{ name: string; source: string }> {
+  const out: Array<{ name: string; source: string }> = [];
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
+    const full = join(dir, entry.name);
+    if (entry.isDirectory()) out.push(...collectChatFiles(full, rel));
+    else if (entry.name.endsWith('.chat.txt')) out.push({ name: rel, source: readFileSync(full, 'utf-8') });
+  }
+  return out.sort((a, b) => a.name.localeCompare(b.name));
+}
 
-  it('src/chats 下所有 .chat.txt 各自编译零错误', () => {
-    for (const f of files) {
-      const { stories, errors } = compileFiles([f]);
-      expect(errors.map((e) => `${f.name}:${e.line} ${e.message}`)).toEqual([]);
-      expect(stories).toHaveLength(1);
+function stateKey(state: GameState): string {
+  const knowledge = Object.entries(state.knowledge)
+    .filter(([, facts]) => facts.length > 0)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([charId, facts]) => [charId, [...facts].sort()]);
+  const dead = Object.entries(state.alive)
+    .filter(([, alive]) => alive === false)
+    .map(([charId]) => charId)
+    .sort();
+  const flags = Object.entries(state.flags).sort(([a], [b]) => a.localeCompare(b));
+  const relationships = Object.entries(state.relationships).sort(([a], [b]) => a.localeCompare(b));
+  const exploration = Object.entries(state.exploration).sort(([a], [b]) => a.localeCompare(b));
+  return JSON.stringify([state.currentNodeId, knowledge, dead, flags, relationships, exploration]);
+}
+
+function assertStaticStructure(story: Story, expectedLeaves: Set<string>) {
+  const reachable = new Set<string>();
+  const stack = [story.entry];
+  while (stack.length) {
+    const id = stack.pop()!;
+    if (reachable.has(id)) continue;
+    reachable.add(id);
+    const node = story.nodes[id];
+    expect(node, `${story.meta.id} 缺少节点 ${id}`).toBeDefined();
+    for (const c of node.choices) stack.push(c.goto);
+    if (node.next) stack.push(node.next);
+  }
+  const allNodes = Object.keys(story.nodes);
+  const unreachable = allNodes.filter((id) => !reachable.has(id));
+  expect(unreachable, `${story.meta.id} 不可达节点: ${unreachable.join(', ')}`).toEqual([]);
+
+  for (const id of allNodes) {
+    const node = story.nodes[id];
+    const isLeaf = node.choices.length === 0 && !node.next;
+    if (isLeaf) expect(expectedLeaves.has(id), `${story.meta.id} 意外叶子节点: ${id}`).toBe(true);
+    else expect(Boolean(node.next) || node.choices.length > 0, `${story.meta.id} 节点 ${id} 无出口`).toBe(true);
+  }
+}
+
+interface TraverseQueueItem {
+  state: GameState;
+  parent: number;
+  choiceId: string | null;
+}
+
+/**
+ * 轻量纯引擎全图遍历：节点内跳过逐行步进并剥离 history，以去重状态检验无死路并收集各结局路径。
+ */
+function traverseChatGraph(story: Story) {
+  const queue: TraverseQueueItem[] = [{ state: createInitialState(story), parent: -1, choiceId: null }];
+  const seen = new Set<string>();
+  const visitedNodes = new Set<string>();
+  const endingPaths = new Map<string, string[]>();
+
+  const reconstructPath = (idx: number): string[] => {
+    const path: string[] = [];
+    for (let cur = idx; cur >= 0; cur = queue[cur].parent) {
+      const cid = queue[cur].choiceId;
+      if (cid) path.push(cid);
     }
+    return path.reverse();
+  };
+
+  for (let idx = 0; idx < queue.length; idx++) {
+    const raw = queue[idx].state;
+    const node = story.nodes[raw.currentNodeId];
+    expect(node, `${story.meta.id} 节点不存在: ${raw.currentNodeId}`).toBeDefined();
+    visitedNodes.add(node.id);
+
+    const s: GameState = {
+      ...raw,
+      lineIndex: Math.max(0, node.lines.length - 1),
+      history: [],
+    };
+    const key = stateKey(s);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    expect(seen.size, `${story.meta.id} 状态数异常膨胀`).toBeLessThan(200_000);
+
+    if (node.choices.length > 0) {
+      const avail = availableChoices(story, s);
+      const auto = avail.find((c) => isAutoChoice(c.label));
+      if (auto) {
+        queue.push({ state: choose(s, story, auto.id), parent: idx, choiceId: null });
+        continue;
+      }
+      const visible = avail.filter((c) => !isAutoChoice(c.label));
+      expect(visible.length, `${story.meta.id} 卡在 ${node.id}（无可用选项）`).toBeGreaterThan(0);
+      for (const c of visible) {
+        queue.push({ state: choose(s, story, c.id), parent: idx, choiceId: c.id });
+      }
+    } else if (node.next) {
+      const next = advance(s, story);
+      expect(next, `${story.meta.id} 节点 ${node.id} [goto] 推进失败`).not.toBe(s);
+      queue.push({ state: next, parent: idx, choiceId: null });
+    } else {
+      const ending = resolveEnding(s, story);
+      expect(ending, `${story.meta.id} 叶子节点 ${node.id} 无结局命中`).not.toBeNull();
+      expect(advance(s, story).ended).toBe(ending!.id);
+      if (!endingPaths.has(ending!.id)) endingPaths.set(ending!.id, reconstructPath(idx));
+    }
+  }
+
+  return { visitedNodes, endingPaths };
+}
+
+describe('内置聊天剧本', () => {
+  const files = collectChatFiles(join(__dirname, '../src/chats'));
+
+  it('src/chats 下所有 .chat.txt 按顺序合并编译零错误，且包含 chat_demo 与 majo_shinpan', () => {
+    const { stories, errors } = compileFiles(files);
+    expect(errors.map((e) => `${e.file}:${e.line} ${e.message}`)).toEqual([]);
+    const ids = stories.map((s) => s.meta.id);
+    expect(ids).toContain('chat_demo');
+    expect(ids).toContain('majo_shinpan');
+
+    expect(builtIn.errors.map((e) => `${e.file}:${e.line} ${e.message}`)).toEqual([]);
+    const builtInMajo = builtIn.stories.find((s) => s.meta.id === 'majo_shinpan');
+    expect(builtInMajo).toBeDefined();
+    expect(builtInMajo?.meta.sources[0]).toMatch(/majo_ch1\.chat\.txt$/);
+    expect(builtInMajo?.entry).toBe('s0_breakfast');
   });
 
-  it('每个内置剧本：所有选项路线都能走到结局', () => {
-    for (const f of files) {
-      const story = compileFiles([f]).stories[0];
-      const endings = new Set<string>();
-      const seen = new Set<string>();
-      const walk = (s: ChatSession) => {
-        s = run(story, s);
-        const { currentNodeId, knowledge, flags, relationships, exploration } = s.state;
-        const key = JSON.stringify([currentNodeId, knowledge, flags, relationships, exploration]);
-        if (seen.has(key)) return;
-        seen.add(key);
-        const st = chatStatus(story, s);
-        if (st === 'ended') {
-          endings.add(s.state.ended!);
-          return;
+  it('chat_demo：所有选项路线都能走到结局 lonely / together', () => {
+    const { stories, errors } = compileFiles(files);
+    expect(errors).toEqual([]);
+    const story = stories.find((s) => s.meta.id === 'chat_demo');
+    expect(story).toBeDefined();
+    if (!story) return;
+
+    const endings = new Set<string>();
+    const seen = new Set<string>();
+    const walk = (s: ChatSession) => {
+      s = run(story, s);
+      const { currentNodeId } = s.state;
+      const key = stateKey(s.state);
+      if (seen.has(key)) return;
+      seen.add(key);
+      const st = chatStatus(story, s);
+      if (st === 'ended') {
+        endings.add(s.state.ended!);
+        return;
+      }
+      expect(st, `chat_demo 卡在 ${currentNodeId}`).toBe('choices');
+      for (const c of visibleChoices(story, s)) walk(pickChat(story, s, c.id));
+    };
+    walk(startChat(story));
+    expect([...endings].sort()).toEqual(['lonely', 'together']);
+  });
+
+  it('majo_shinpan：结构完整、无死路且 4 条结局均可从 s0_breakfast 到达', () => {
+    const { stories, errors } = compileFiles(files);
+    expect(errors.map((e) => `${e.file}:${e.line} ${e.message}`)).toEqual([]);
+    const story = stories.find((s) => s.meta.id === 'majo_shinpan');
+    expect(story).toBeDefined();
+    if (!story) return;
+
+    expect(story.entry).toBe('s0_breakfast');
+    expect(meId(story)).toBe('艾玛');
+    expect(story.meta.sources[0]).toMatch(/majo_ch1\.chat\.txt$/);
+
+    assertStaticStructure(
+      story,
+      new Set(['ch4_end_3p', 'ch4_end_shiro', 'ch4_end_meruru', 'ch4_end_nocase']),
+    );
+
+    const { visitedNodes, endingPaths } = traverseChatGraph(story);
+    const unvisited = Object.keys(story.nodes).filter((id) => !visitedNodes.has(id));
+    expect(unvisited, `运行时不可达节点: ${unvisited.join(', ')}`).toEqual([]);
+
+    const expectedEndings = ['end_3p', 'end_meruru', 'end_nocase', 'end_shiro'];
+    expect([...endingPaths.keys()].sort()).toEqual(expectedEndings);
+
+    // 使用完整聊天会话 API 抽测各结局代表性路径
+    let checkedUndo = false;
+    for (const endingId of expectedEndings) {
+      const path = endingPaths.get(endingId)!;
+      let session = startChat(story);
+      expect(session.log.length).toBeGreaterThan(0);
+
+      for (const choiceId of path) {
+        session = run(story, session);
+        expect(chatStatus(story, session)).toBe('choices');
+        expect(visibleChoices(story, session).some((c) => c.id === choiceId)).toBe(true);
+        if (!checkedUndo) {
+          const picked = pickChat(story, session, choiceId);
+          const undone = undoChoice(picked);
+          expect(undone.log).toEqual(session.log);
+          expect(undone.state).toEqual(session.state);
+          checkedUndo = true;
         }
-        expect(st, `${f.name} 卡在 ${currentNodeId}`).toBe('choices');
-        for (const c of visibleChoices(story, s)) walk(pickChat(story, s, c.id));
-      };
-      walk(startChat(story));
-      expect(endings.size, f.name).toBeGreaterThan(0);
-      if (f.name === 'demo.chat.txt') expect([...endings].sort()).toEqual(['lonely', 'together']);
+        session = pickChat(story, session, choiceId);
+      }
+
+      session = run(story, session);
+      expect(chatStatus(story, session)).toBe('ended');
+      expect(session.state.ended).toBe(endingId);
+      expect(session.log.at(-1)).toMatchObject({ kind: 'end', id: endingId });
+      expect(session.log.map((e) => e.kind)).not.toContain('pick-auto');
+      expect(session.log.some((e) => e.kind === 'say')).toBe(true);
+      expect(session.log.some((e) => e.kind === 'narr')).toBe(true);
+      expect(session.log.some((e) => e.kind === 'pick')).toBe(true);
     }
   });
 });
