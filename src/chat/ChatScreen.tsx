@@ -168,9 +168,11 @@ function ChatRoom({ story }: { story: Story }) {
     return () => ro.disconnect();
   }, [status]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const el = scrollRef.current;
-    if (el) el.scrollTo({ top: el.scrollHeight, behavior: 'smooth' });
+    if (!el) return;
+    const reduce = Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+    el.scrollTo({ top: el.scrollHeight, behavior: reduce ? 'auto' : 'smooth' });
   }, [session.log.length, status, footH]);
 
   useEffect(() => {

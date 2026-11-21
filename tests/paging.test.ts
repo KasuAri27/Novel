@@ -2,10 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { lastVisualIndex, resolveTurn, spreadSlots } from '../src/ui/reader/paging';
 
 describe('阅读器视觉翻页', () => {
-  it('窄屏：最后一展就是正文末页', () => {
+  it('窄屏：最后一展就是正文末页；正文超出选项页容量时单占一展放选项', () => {
     expect(lastVisualIndex(3, false, 1)).toBe(2);
     expect(lastVisualIndex(1, false, 1)).toBe(0);
     expect(lastVisualIndex(3, true, 1)).toBe(2);
+    expect(lastVisualIndex(3, true, 1, true)).toBe(3);
+    expect(lastVisualIndex(1, true, 1, true)).toBe(1);
   });
 
   it('PC 对开：4 页正文合成 2 展', () => {
@@ -26,9 +28,22 @@ describe('阅读器视觉翻页', () => {
     expect(spreadSlots(1, 3, false, 2)).toEqual({ left: 2, right: null, showChoices: false });
   });
 
-  it('窄屏槽位：只有左栏，选项在末页', () => {
+  it('窄屏槽位：只有左栏，选项在末页（超出容量时独立一展且 left 为 null）', () => {
     expect(spreadSlots(0, 3, false, 1)).toEqual({ left: 0, right: null, showChoices: false });
     expect(spreadSlots(2, 3, true, 1)).toEqual({ left: 2, right: null, showChoices: true });
+    expect(spreadSlots(2, 3, true, 1, true)).toEqual({ left: 2, right: null, showChoices: false });
+    expect(spreadSlots(3, 3, true, 1, true)).toEqual({ left: null, right: null, showChoices: true });
+    expect(
+      resolveTurn({
+        dir: 'next',
+        visualIndex: 2,
+        textPageCount: 3,
+        hasChoices: true,
+        canRewind: true,
+        perSpread: 1,
+        choiceOverflow: true,
+      }),
+    ).toEqual({ kind: 'local', nextIndex: 3 });
   });
 
   it('PC 对开槽位：奇数末页右侧给选项', () => {

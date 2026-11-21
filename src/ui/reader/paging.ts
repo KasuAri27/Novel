@@ -22,12 +22,14 @@ export function lastVisualIndex(
   textPageCount: number,
   hasChoices = false,
   perSpread = 1,
+  choiceOverflow = false,
 ): number {
   const n = Math.max(1, textPageCount);
   const step = Math.max(1, perSpread);
   const textSpreads = Math.ceil(n / step);
-  // PC 上最后一展已铺满两页正文时，选项单独再占一展
-  if (hasChoices && step >= 2 && n % step === 0) {
+  // PC 上最后一展已铺满两页正文时，选项单独再占一展；
+  // 窄屏单页时若正文超出选项页上半部容量，同样让选项单占一展，避免正文被裁切或重排闪烁
+  if (hasChoices && ((step >= 2 && n % step === 0) || (step < 2 && choiceOverflow))) {
     return textSpreads;
   }
   return Math.max(0, textSpreads - 1);
@@ -39,13 +41,17 @@ export function spreadSlots(
   textPageCount: number,
   hasChoices: boolean,
   perSpread = 1,
+  choiceOverflow = false,
 ): SpreadSlots {
   const n = Math.max(1, textPageCount);
-  const last = lastVisualIndex(n, hasChoices, perSpread);
+  const last = lastVisualIndex(n, hasChoices, perSpread, choiceOverflow);
   const idx = Math.min(Math.max(0, visualIndex), last);
   const step = Math.max(1, perSpread);
 
   if (step < 2) {
+    if (hasChoices && choiceOverflow && idx >= n) {
+      return { left: null, right: null, showChoices: true };
+    }
     return {
       left: Math.min(idx, n - 1),
       right: null,
@@ -74,10 +80,12 @@ export function resolveTurn(opts: {
   hasChoices: boolean;
   canRewind: boolean;
   perSpread?: number;
+  choiceOverflow?: boolean;
 }): TurnPlan {
   const { dir, visualIndex, textPageCount, hasChoices, canRewind } = opts;
   const perSpread = opts.perSpread ?? 1;
-  const last = lastVisualIndex(textPageCount, hasChoices, perSpread);
+  const choiceOverflow = opts.choiceOverflow ?? false;
+  const last = lastVisualIndex(textPageCount, hasChoices, perSpread, choiceOverflow);
   const idx = Math.min(Math.max(0, visualIndex), last);
 
   if (dir === 'next') {

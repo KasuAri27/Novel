@@ -5,10 +5,15 @@
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import type { Line } from '../../engine/types';
 
+export interface PageMetrics {
+  count: number;
+  choiceOverflow: boolean;
+}
+
 interface Props {
   paragraphs: Line[];
   pageIndex: number | 'last' | null;
-  onPageCount?: (count: number) => void;
+  onPageCount?: (metrics: PageMetrics) => void;
 }
 
 export function PageFace({ paragraphs, pageIndex, onPageCount }: Props) {
@@ -16,13 +21,22 @@ export function PageFace({ paragraphs, pageIndex, onPageCount }: Props) {
   const flowRef = useRef<HTMLDivElement>(null);
   const onCountRef = useRef(onPageCount);
   onCountRef.current = onPageCount;
+  const lastReportedRef = useRef<PageMetrics | null>(null);
 
   const [metrics, setMetrics] = useState({ count: 1, width: 0 });
 
+  const report = useCallback((next: PageMetrics) => {
+    const prev = lastReportedRef.current;
+    if (prev && prev.count === next.count && prev.choiceOverflow === next.choiceOverflow) return;
+    lastReportedRef.current = next;
+    onCountRef.current?.(next);
+  }, []);
+
   const measure = useCallback(() => {
     if (paragraphs.length === 0) {
-      setMetrics({ count: 1, width: clipRef.current?.clientWidth ?? 0 });
-      onCountRef.current?.(1);
+      const w = clipRef.current?.clientWidth ?? 0;
+      setMetrics((prev) => (prev.count === 1 && prev.width === w ? prev : { count: 1, width: w }));
+      report({ count: 1, choiceOverflow: false });
       return;
     }
     const clip = clipRef.current;
@@ -34,19 +48,35 @@ export function PageFace({ paragraphs, pageIndex, onPageCount }: Props) {
     flow.style.width = `${w}px`;
     const sw = flow.scrollWidth;
     const count = Math.max(1, Math.ceil(sw / w - 0.02));
-    setMetrics({ count, width: w });
-    onCountRef.current?.(count);
-  }, [paragraphs]);
+    let choiceOverflow = count > 1;
+    if (!choiceOverflow) {
+      const lastP = flow.lastElementChild as HTMLElement | null;
+      const spreadH = clip.closest('.book-spread')?.clientHeight ?? clip.clientHeight;
+      const choiceBudget = Math.max(0, spreadH * 0.38 - 52);
+      const contentH = lastP ? lastP.getBoundingClientRect().bottom - flow.getBoundingClientRect().top : 0;
+      choiceOverflow = contentH > choiceBudget;
+    }
+    setMetrics((prev) => (prev.count === count && prev.width === w ? prev : { count, width: w }));
+    report({ count, choiceOverflow });
+  }, [paragraphs, report]);
 
   useLayoutEffect(() => {
     if (pageIndex === null) return;
+    let alive = true;
     measure();
     const clip = clipRef.current;
     if (!clip) return;
-    const ro = new ResizeObserver(() => measure());
+    const ro = new ResizeObserver(() => {
+      if (alive) measure();
+    });
     ro.observe(clip);
-    void document.fonts?.ready.then(() => measure());
-    return () => ro.disconnect();
+    void document.fonts?.ready.then(() => {
+      if (alive) measure();
+    });
+    return () => {
+      alive = false;
+      ro.disconnect();
+    };
   }, [measure, pageIndex]);
 
   // 对开右栏可能暂时没有正文，不要把左页内容夹过来重复显示

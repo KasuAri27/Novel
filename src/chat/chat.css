@@ -30,41 +30,46 @@
   font-family: var(--sans);
   font-size: 15px;
   color-scheme: dark;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* —— 背景光晕：全页唯一的环境动效 —— */
+/* —— 背景光晕：用径向渐变替代大面积 filter:blur，避免滚动/重绘时全屏闪烁 —— */
 .chat-glow,
 .chat-glow::before,
 .chat-glow::after {
   position: absolute;
   border-radius: 50%;
-  filter: blur(70px);
   pointer-events: none;
 }
 .chat-glow {
   z-index: -1;
-  width: 46vmax;
-  height: 46vmax;
-  left: -12vmax;
-  top: -10vmax;
-  background: rgba(226, 85, 138, 0.42);
-  animation: chat-drift 26s ease-in-out infinite alternate;
+  width: 68vmax;
+  height: 68vmax;
+  left: -20vmax;
+  top: -18vmax;
+  background: radial-gradient(circle, rgba(226, 85, 138, 0.38) 0%, rgba(226, 85, 138, 0.14) 38%, transparent 72%);
+  will-change: transform;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chat-glow {
+    animation: chat-drift 26s ease-in-out infinite alternate;
+  }
 }
 .chat-glow::before {
   content: '';
-  width: 38vmax;
-  height: 38vmax;
-  left: 70vmax;
-  top: 30vmax;
-  background: rgba(160, 50, 140, 0.4);
+  width: 58vmax;
+  height: 58vmax;
+  left: 62vmax;
+  top: 22vmax;
+  background: radial-gradient(circle, rgba(160, 50, 140, 0.36) 0%, rgba(160, 50, 140, 0.12) 40%, transparent 72%);
 }
 .chat-glow::after {
   content: '';
-  width: 30vmax;
-  height: 30vmax;
-  left: 18vmax;
-  top: 62vmax;
-  background: rgba(255, 120, 150, 0.24);
+  width: 48vmax;
+  height: 48vmax;
+  left: 12vmax;
+  top: 54vmax;
+  background: radial-gradient(circle, rgba(255, 120, 150, 0.22) 0%, rgba(255, 120, 150, 0.08) 40%, transparent 72%);
 }
 @keyframes chat-drift {
   to {
@@ -82,6 +87,8 @@
   padding: 0;
   filter: none;
   transform: none;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .chat-app button:focus-visible {
   outline: 2px solid var(--rose);
@@ -101,6 +108,8 @@
   background: linear-gradient(to bottom, rgba(42, 10, 30, 0.55), rgba(42, 10, 30, 0.28));
   backdrop-filter: blur(22px) saturate(1.5);
   -webkit-backdrop-filter: blur(22px) saturate(1.5);
+  transform: translateZ(0);
+  contain: layout style;
   border-bottom: 1px solid var(--glass-edge);
   box-shadow: inset 0 -1px 0 rgba(0, 0, 0, 0.18);
 }
@@ -265,19 +274,26 @@
   padding: calc(var(--head-h) + env(safe-area-inset-top) + 20px) 14px 28px;
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 205, 228, 0.25) transparent;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .chat-log[data-clickable='true'] {
   cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
 }
 .chat-col {
   max-width: 720px;
   margin: 0 auto;
+  padding-bottom: 10px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
-.chat-col > * {
-  animation: chat-in 0.28s cubic-bezier(0.2, 0.7, 0.2, 1);
+@media (prefers-reduced-motion: no-preference) {
+  .chat-col > * {
+    animation: chat-in 0.28s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
 }
 @keyframes chat-in {
   from {
@@ -414,7 +430,11 @@
   border-radius: 50%;
   background: var(--blush);
   opacity: 0.35;
-  animation: chat-breathe 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chat-typing i {
+    animation: chat-breathe 1.4s ease-in-out infinite;
+  }
 }
 .chat-typing i:nth-child(2) {
   animation-delay: 0.18s;
@@ -468,8 +488,14 @@
   background: linear-gradient(to top, rgba(42, 10, 30, 0.6), rgba(42, 10, 30, 0.3));
   backdrop-filter: blur(24px) saturate(1.5);
   -webkit-backdrop-filter: blur(24px) saturate(1.5);
+  transform: translateZ(0);
+  contain: layout style;
   border-top: 1px solid var(--glass-edge);
-  animation: chat-rise 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .chat-foot {
+    animation: chat-rise 0.32s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
 }
 @keyframes chat-rise {
   from {
@@ -534,14 +560,5 @@
   }
   .chat-narr-self {
     margin-right: 4px;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .chat-glow,
-  .chat-col > *,
-  .chat-typing i,
-  .chat-foot {
-    animation: none;
   }
 }
