@@ -10,6 +10,7 @@ import {
 } from '../store/useEngineStore';
 import { ImportDebugPanel } from './ImportDebugPanel';
 import { chapterLabel, excerptFrom } from './player/progress';
+import { StoryLine } from './reader/StoryLine';
 import { SettingsPanel } from './SettingsPanel';
 
 type Phase = 'idle' | 'flip' | 'push';
@@ -168,9 +169,7 @@ export function TitleScreen() {
             <div className="leaf leaf-left">
               <div className="leaf-pagenum">{coverPercent ?? '·'}</div>
               {openPreviewLines.slice(0, 3).map((ln, i) => (
-                <p key={i} className={ln.speaker ? 'line-say' : 'line-narr'}>
-                  {ln.text}
-                </p>
+                <StoryLine key={i} line={ln} />
               ))}
             </div>
             <div className="book-gutter" />

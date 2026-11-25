@@ -4,6 +4,7 @@
  */
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import type { Line } from '../../engine/types';
+import { StoryLine } from './StoryLine';
 
 export interface PageMetrics {
   count: number;
@@ -107,9 +108,7 @@ export function PageFace({ paragraphs, pageIndex, onPageCount }: Props) {
         }}
       >
         {paragraphs.map((ln, i) => (
-          <p key={i} className={ln.speaker ? 'line-say' : 'line-narr'}>
-            {ln.text}
-          </p>
+          <StoryLine key={i} line={ln} />
         ))}
       </div>
     </div>

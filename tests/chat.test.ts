@@ -2,15 +2,14 @@
  * 聊天模式：格式扩展（me / color / avatar）、选项三种写法、▸ 自动分支、
  * 会话推进 / 选择 / 撤回 / 结局，以及 src/chats 下内置剧本零错误。
  */
-import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { compileFiles, compileStory } from '../src/parser/compiler';
+import { compileStory } from '../src/parser/compiler';
 import { createInitialState } from '../src/engine/state';
 import { advance, availableChoices, choose } from '../src/engine/reducer';
 import { resolveEnding } from '../src/engine/ending';
 import type { GameState, Story } from '../src/engine/types';
 import { builtIn } from '../src/chat/library';
+import { loadAllStories } from '../src/content/loadStories';
 import {
   chatStatus,
   classifyChoice,
@@ -167,17 +166,6 @@ describe('聊天会话', () => {
   });
 });
 
-function collectChatFiles(dir: string, prefix = ''): Array<{ name: string; source: string }> {
-  const out: Array<{ name: string; source: string }> = [];
-  for (const entry of readdirSync(dir, { withFileTypes: true })) {
-    const rel = prefix ? `${prefix}/${entry.name}` : entry.name;
-    const full = join(dir, entry.name);
-    if (entry.isDirectory()) out.push(...collectChatFiles(full, rel));
-    else if (entry.name.endsWith('.chat.txt')) out.push({ name: rel, source: readFileSync(full, 'utf-8') });
-  }
-  return out.sort((a, b) => a.name.localeCompare(b.name));
-}
-
 function stateKey(state: GameState): string {
   const knowledge = Object.entries(state.knowledge)
     .filter(([, facts]) => facts.length > 0)
@@ -285,26 +273,26 @@ function traverseChatGraph(story: Story) {
 }
 
 describe('内置聊天剧本', () => {
-  const files = collectChatFiles(join(__dirname, '../src/chats'));
-
-  it('src/chats 下所有 .chat.txt 按顺序合并编译零错误，且包含 chat_demo 与 majo_shinpan', () => {
-    const { stories, errors } = compileFiles(files);
-    expect(errors.map((e) => `${e.file}:${e.line} ${e.message}`)).toEqual([]);
-    const ids = stories.map((s) => s.meta.id);
+  it('小说版与对话版共享 src/stories 同一份主剧本且零错误编译，包含 chat_demo 与 majo_shinpan', () => {
+    expect(builtIn.errors.map((e) => `${e.file}:${e.line} ${e.message}`)).toEqual([]);
+    const ids = builtIn.stories.map((s) => s.meta.id);
     expect(ids).toContain('chat_demo');
     expect(ids).toContain('majo_shinpan');
 
-    expect(builtIn.errors.map((e) => `${e.file}:${e.line} ${e.message}`)).toEqual([]);
+    const novelRes = loadAllStories();
+    expect(novelRes.errors).toEqual([]);
+    const novelMajo = novelRes.stories.find((s) => s.meta.id === 'majo_shinpan');
     const builtInMajo = builtIn.stories.find((s) => s.meta.id === 'majo_shinpan');
+    expect(novelMajo).toBeDefined();
     expect(builtInMajo).toBeDefined();
-    expect(builtInMajo?.meta.sources[0]).toMatch(/majo_ch1\.chat\.txt$/);
+    expect(builtInMajo?.meta.sources[0]).toMatch(/chapter1\.story\.txt$/);
+    expect(builtInMajo?.meta.sources).toEqual(novelMajo?.meta.sources);
     expect(builtInMajo?.entry).toBe('s0_breakfast');
   });
 
   it('chat_demo：所有选项路线都能走到结局 lonely / together', () => {
-    const { stories, errors } = compileFiles(files);
-    expect(errors).toEqual([]);
-    const story = stories.find((s) => s.meta.id === 'chat_demo');
+    expect(builtIn.errors).toEqual([]);
+    const story = builtIn.stories.find((s) => s.meta.id === 'chat_demo');
     expect(story).toBeDefined();
     if (!story) return;
 
@@ -328,27 +316,40 @@ describe('内置聊天剧本', () => {
     expect([...endings].sort()).toEqual(['lonely', 'together']);
   });
 
-  it('majo_shinpan：结构完整、无死路且 4 条结局均可从 s0_breakfast 到达', () => {
-    const { stories, errors } = compileFiles(files);
-    expect(errors.map((e) => `${e.file}:${e.line} ${e.message}`)).toEqual([]);
-    const story = stories.find((s) => s.meta.id === 'majo_shinpan');
+  it('majo_shinpan：结构完整、无死路且 6 条结局均可从 s0_breakfast 到达', () => {
+    expect(builtIn.errors.map((e) => `${e.file}:${e.line} ${e.message}`)).toEqual([]);
+    const story = builtIn.stories.find((s) => s.meta.id === 'majo_shinpan');
     expect(story).toBeDefined();
     if (!story) return;
 
     expect(story.entry).toBe('s0_breakfast');
     expect(meId(story)).toBe('艾玛');
-    expect(story.meta.sources[0]).toMatch(/majo_ch1\.chat\.txt$/);
+    expect(story.meta.sources[0]).toMatch(/chapter1\.story\.txt$/);
 
     assertStaticStructure(
       story,
-      new Set(['ch4_end_3p', 'ch4_end_shiro', 'ch4_end_meruru', 'ch4_end_nocase']),
+      new Set([
+        'ch4_end_3p',
+        'ch4_end_shiro',
+        'ch4_end_meruru',
+        'ch6_end_nocase_life',
+        'ch7_nocase_be',
+        'ch7_nocase_epilogue',
+      ]),
     );
 
     const { visitedNodes, endingPaths } = traverseChatGraph(story);
     const unvisited = Object.keys(story.nodes).filter((id) => !visitedNodes.has(id));
     expect(unvisited, `运行时不可达节点: ${unvisited.join(', ')}`).toEqual([]);
 
-    const expectedEndings = ['end_3p', 'end_meruru', 'end_nocase', 'end_shiro'];
+    const expectedEndings = [
+      'END_nocase_be',
+      'END_nocase_he',
+      'END_nocase_life',
+      'end_3p',
+      'end_meruru',
+      'end_shiro',
+    ];
     expect([...endingPaths.keys()].sort()).toEqual(expectedEndings);
 
     // 使用完整聊天会话 API 抽测各结局代表性路径

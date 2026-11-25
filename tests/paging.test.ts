@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { lastVisualIndex, resolveTurn, spreadSlots } from '../src/ui/reader/paging';
+import { formatDialogueLine } from '../src/ui/reader/StoryLine';
 
 describe('阅读器视觉翻页', () => {
   it('窄屏：最后一展就是正文末页；正文超出选项页容量时单占一展放选项', () => {
@@ -134,5 +135,41 @@ describe('阅读器视觉翻页', () => {
         canRewind: true,
       }),
     ).toEqual({ kind: 'engine-prev' });
+  });
+});
+
+describe('小说模式对白排版格式化', () => {
+  it('旁白行保持原样', () => {
+    expect(formatDialogueLine(null, '  海风拂过岛屿。  ')).toEqual({
+      speaker: null,
+      action: null,
+      speech: '海风拂过岛屿。',
+    });
+  });
+
+  it('普通对白补全双引号并保留不重复加引号', () => {
+    expect(formatDialogueLine('希罗', '别急。')).toEqual({
+      speaker: '希罗',
+      action: null,
+      speech: '“别急。”',
+    });
+    expect(formatDialogueLine('希罗', '“已经够了。”')).toEqual({
+      speaker: '希罗',
+      action: null,
+      speech: '“已经够了。”',
+    });
+  });
+
+  it('带前置动作与纯动作对白分别规范拆分', () => {
+    expect(formatDialogueLine('艾玛', '（顿了顿）真是的……')).toEqual({
+      speaker: '艾玛',
+      action: '（顿了顿）',
+      speech: '“真是的……”',
+    });
+    expect(formatDialogueLine('艾玛', '（轻轻点头）')).toEqual({
+      speaker: '艾玛',
+      action: '（轻轻点头）',
+      speech: '',
+    });
   });
 });

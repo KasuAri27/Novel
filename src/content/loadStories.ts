@@ -29,10 +29,12 @@ const rawModules = import.meta.glob('/src/stories/**/*.story.txt', {
 });
 
 export function loadAllStories(): LoadResult {
-  const files = Object.entries(rawModules).map(([name, source]) => ({
-    name,
-    source: source as string,
-  }));
+  const files = Object.entries(rawModules)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([name, source]) => ({
+      name,
+      source: source as string,
+    }));
   const { stories, errors } = compileFiles(files);
   const manifest: StorySummary[] = stories.map((s) => ({
     id: s.meta.id,

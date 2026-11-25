@@ -17,6 +17,8 @@ export interface ChatLibraryItem {
   imported: boolean;
 }
 
+import { loadAllStories } from '../content/loadStories';
+
 const builtInRaw = import.meta.glob('/src/chats/**/*.chat.txt', {
   query: '?raw',
   import: 'default',
@@ -26,14 +28,19 @@ const builtInRaw = import.meta.glob('/src/chats/**/*.chat.txt', {
 const IMPORTS_KEY = 'inov:chat:imports';
 
 function compileBuiltIn(): { stories: Story[]; errors: CompileError[] } {
-  // 按文件名排序，确保分章文件（如 majo_ch1..ch4）顺序稳定，首章提供 @story meta 与 @entry
-  const files = Object.entries(builtInRaw)
+  const storyResult = loadAllStories();
+  // 按文件名排序，确保分章文件顺序稳定，首章提供 @story meta 与 @entry
+  const chatFiles = Object.entries(builtInRaw)
     .sort(([a], [b]) => a.localeCompare(b))
     .map(([name, source]) => ({
       name,
       source: source as string,
     }));
-  return compileFiles(files);
+  const chatResult = compileFiles(chatFiles);
+  return {
+    stories: [...storyResult.stories, ...chatResult.stories],
+    errors: [...storyResult.errors, ...chatResult.errors],
+  };
 }
 
 export const builtIn = compileBuiltIn();

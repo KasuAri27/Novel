@@ -29,7 +29,10 @@ describe('章节进度', () => {
     expect(chapterLabel('s0_breakfast')).toBe('第一章 · 海平线');
     expect(chapterLabel('ch2_night')).toBe('第二章 · 无树之岛');
     expect(chapterLabel('ch3_morning')).toBe('第三章 · 暴风雨前');
-    expect(chapterLabel('ch4_split_3p')).toBe('第四章 · 第一案');
+    expect(chapterLabel('ch4_split_3p')).toBe('第四章 · 第二十九日');
+    expect(chapterLabel('ch5_nocase_entry')).toBe('第五章 · 抉择与日常');
+    expect(chapterLabel('ch6_nocase_entry')).toBe('第六章 · 探寻与归常');
+    expect(chapterLabel('ch7_nocase_entry')).toBe('第七章 · 樱落对峙');
   });
 
   it('按节点声明顺序估算百分比', () => {

@@ -16,7 +16,7 @@ function collectStoryFiles(dir: string): string[] {
     if (name.isDirectory()) out.push(...collectStoryFiles(p));
     else if (name.name.endsWith('.story.txt')) out.push(p);
   }
-  return out;
+  return out.sort((a, b) => a.localeCompare(b));
 }
 
 describe('剧情编译', () => {
@@ -60,7 +60,9 @@ describe('剧情编译', () => {
       'ch4_end_3p',
       'ch4_end_shiro',
       'ch4_end_meruru',
-      'ch4_end_nocase',
+      'ch6_end_nocase_life',
+      'ch7_nocase_be',
+      'ch7_nocase_epilogue',
     ]);
     for (const id of all) {
       const node = story.nodes[id];

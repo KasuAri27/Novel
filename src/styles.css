@@ -605,8 +605,15 @@ button:disabled {
 }
 .line-say {
   text-indent: 0;
+  color: var(--ink);
+}
+.say-speaker {
   color: var(--violet);
   font-weight: 650;
+}
+.say-act {
+  color: var(--ink-soft);
+  font-style: italic;
 }
 .page-clip .dim,
 .page-leaf .dim {
