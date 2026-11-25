@@ -6,10 +6,10 @@
  *
  * 会话 = { state, log }，整份可 JSON 序列化，直接作为存档。
  */
-import type { Choice, GameState, Story, StoryNode } from '../engine/types';
-import { advance, availableChoices, choose } from '../engine/reducer';
-import { createInitialState } from '../engine/state';
-import { findEnding } from '../engine/ending';
+import type { Choice, GameState, Story, StoryNode } from '../../core/engine/types';
+import { advance, availableChoices, choose } from '../../core/engine/reducer';
+import { createInitialState } from '../../core/engine/state';
+import { findEnding } from '../../core/engine/ending';
 
 /** 选项发出后的呈现方式 */
 export type PickStyle =

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { compileStory } from '../src/parser/compiler';
+import { compileStory } from '../src/core/parser/compiler';
 
 describe('parser: DSL -> 内部 Story', () => {
   const DSL = [

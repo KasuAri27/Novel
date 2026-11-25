@@ -1,9 +1,9 @@
 /**
  * 阅读进度展示：章节名与百分比，仅用于封面/顶栏，不改引擎状态。
  */
-import type { SaveRecord } from '../../engine/persistence';
-import type { Story } from '../../engine/types';
-import { formatDialogueLine } from '../reader/StoryLine';
+import type { SaveRecord } from '../../core/engine/persistence';
+import type { Story } from '../../core/engine/types';
+import { formatDialogueLine } from './reader/StoryLine';
 
 export interface AutosavePreview {
   storyId: string;

@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
-import { useEngineStore } from './store/useEngineStore';
-import { TitleScreen } from './ui/TitleScreen';
-import { PlayScreen } from './ui/PlayScreen';
-import { EndingScreen } from './ui/EndingScreen';
-import { ChatScreen } from './chat/ChatScreen';
+import { useEngineStore } from '../features/novel/useEngineStore';
+import { TitleScreen } from '../features/novel/TitleScreen';
+import { PlayScreen } from '../features/novel/PlayScreen';
+import { EndingScreen } from '../features/novel/EndingScreen';
+import { ChatScreen } from '../features/chat/ChatScreen';
 
 /** 地址栏 #chat 时进入聊天模式；其余为小说阅读（标题 / 全屏阅读 / 结局）。 */
 function useHashRoute(): string {

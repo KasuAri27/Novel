@@ -3,7 +3,7 @@
  * pageIndex = 'last' 用于回退时落在上一节点末页；null 表示对开空页。
  */
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
-import type { Line } from '../../engine/types';
+import type { Line } from '../../../core/engine/types';
 import { StoryLine } from './StoryLine';
 
 export interface PageMetrics {

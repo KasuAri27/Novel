@@ -6,20 +6,20 @@
  * 进度只走浏览器自动存档（单一槽位），没有读档页。
  */
 import { create } from 'zustand';
-import type { Choice, GameState, Line, Story, StoryNode } from '../engine/types';
-import { availableChoices, choose, nextPage, rewind as engRewind } from '../engine/reducer';
-import { createInitialState } from '../engine/state';
-import { findEnding } from '../engine/ending';
+import type { Choice, GameState, Line, Story, StoryNode } from '../../core/engine/types';
+import { availableChoices, choose, nextPage, rewind as engRewind } from '../../core/engine/reducer';
+import { createInitialState } from '../../core/engine/state';
+import { findEnding } from '../../core/engine/ending';
 import {
   createDefaultStorage,
   loadAutosave,
   saveAutosave,
   type Storage,
-} from '../engine/persistence';
-import { getStories } from '../content/registry';
-import type { CompileError } from '../parser/compiler';
-import type { StorySummary } from '../content/loadStories';
-import { describeAutosave, type AutosavePreview } from '../ui/player/progress';
+} from '../../core/engine/persistence';
+import { getStories } from '../../content/registry';
+import type { CompileError } from '../../core/parser/compiler';
+import type { StorySummary } from '../../content/loadStories';
+import { describeAutosave, type AutosavePreview } from './progress';
 
 export type Screen = 'title' | 'play' | 'ending';
 export type Page = 'reading' | 'choices';

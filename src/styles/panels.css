@@ -1,0 +1,169 @@
+/* ===================== 设置面板 / 侧边抽屉 / 主题切换 ===================== */
+.settings-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  background: var(--overlay);
+  touch-action: auto;
+  user-select: auto;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) 0 env(safe-area-inset-left, 0px);
+  font-family: var(--ui-font);
+}
+.settings-sheet,
+.side-sheet {
+  width: 100%;
+  max-height: min(88dvh, 860px);
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  background: var(--panel-bg);
+  color: var(--panel-fg);
+  border-radius: 18px 18px 0 0;
+  box-shadow: 0 -12px 40px var(--shadow);
+  padding: 8px 20px calc(20px + env(safe-area-inset-bottom, 0px));
+}
+.settings-sheet-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  padding: 12px 0 10px;
+  background: var(--panel-bg);
+}
+.settings-sheet-head h3 {
+  margin: 0;
+  font-size: 20px;
+  letter-spacing: 2px;
+  color: var(--panel-fg);
+}
+.settings-close {
+  min-height: 44px;
+  padding: 8px 16px;
+  font-size: 15px;
+}
+
+.overflow-menu {
+  position: absolute;
+  top: 64px;
+  right: 16px;
+  width: 280px;
+  background: var(--night-2);
+  border: 1px solid var(--line-ui);
+  border-radius: 12px;
+  padding: 8px 0;
+  box-shadow: 0 16px 40px var(--shadow);
+  display: flex;
+  flex-direction: column;
+}
+.overflow-menu button {
+  border: none;
+  background: transparent;
+  border-radius: 0;
+  text-align: left;
+  padding: 12px 32px;
+  color: #fff;
+  font-size: 15px;
+}
+.overflow-menu button:hover {
+  background: rgba(255, 255, 255, 0.06);
+  filter: none;
+}
+
+.toc-current {
+  color: var(--gold-ui);
+  font-size: 14px;
+  margin: 8px 0 12px;
+}
+.toc-note {
+  margin: 0 0 28px;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.toc-back {
+  min-height: 44px;
+}
+
+.backlog {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  padding-bottom: 12px;
+}
+.backlog-node p {
+  margin: 0 0 8px;
+  line-height: 1.8;
+  font-size: 15px;
+}
+.backlog-who {
+  display: block;
+  font-size: 12px;
+  color: var(--gold-ui);
+  margin-bottom: 4px;
+  font-family: var(--ui-font);
+}
+
+.theme-switch {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 8px;
+  margin: 8px 0 4px;
+}
+.theme-switch > button {
+  min-height: 44px;
+  margin: 0;
+  border-radius: 10px;
+  font-size: 15px;
+  color: var(--panel-fg);
+  background: transparent;
+}
+.theme-switch > button.is-on {
+  color: var(--gear-fg);
+  background: var(--gear-bg);
+  border-color: transparent;
+  font-weight: 700;
+}
+
+.settings-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin: 10px 0;
+}
+.settings-actions > button,
+.settings-back {
+  min-height: 48px;
+  width: 100%;
+  font-size: 16px;
+}
+.settings-back {
+  margin-top: 4px;
+}
+
+.panel-inner h4 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: var(--panel-muted);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+.row-between {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  margin: 8px 0;
+  font-size: 13px;
+}
+.section-gap {
+  margin-top: 22px;
+}
+.empty {
+  color: var(--panel-muted);
+  font-size: 13px;
+}

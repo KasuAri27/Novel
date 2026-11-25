@@ -2,9 +2,9 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { registerSW } from 'virtual:pwa-register';
 import App from './App';
-import { initTheme } from './ui/theme/themeStore';
-import { initReaderPrefs } from './ui/theme/readerPrefs';
-import './styles.css';
+import { initTheme } from '../shared/theme/themeStore';
+import { initReaderPrefs } from '../shared/theme/readerPrefs';
+import '../styles/index.css';
 
 initTheme();
 initReaderPrefs();

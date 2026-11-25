@@ -1,14 +1,14 @@
 /**
  * 聊天模式：格式扩展（me / color / avatar）、选项三种写法、▸ 自动分支、
- * 会话推进 / 选择 / 撤回 / 结局，以及 src/chats 下内置剧本零错误。
+ * 会话推进 / 选择 / 撤回 / 结局，以及 content/chats 下内置剧本零错误。
  */
 import { describe, expect, it } from 'vitest';
-import { compileStory } from '../src/parser/compiler';
-import { createInitialState } from '../src/engine/state';
-import { advance, availableChoices, choose } from '../src/engine/reducer';
-import { resolveEnding } from '../src/engine/ending';
-import type { GameState, Story } from '../src/engine/types';
-import { builtIn } from '../src/chat/library';
+import { compileStory } from '../src/core/parser/compiler';
+import { createInitialState } from '../src/core/engine/state';
+import { advance, availableChoices, choose } from '../src/core/engine/reducer';
+import { resolveEnding } from '../src/core/engine/ending';
+import type { GameState, Story } from '../src/core/engine/types';
+import { builtIn } from '../src/features/chat/library';
 import { loadAllStories } from '../src/content/loadStories';
 import {
   chatStatus,
@@ -22,7 +22,7 @@ import {
   undoChoice,
   visibleChoices,
   type ChatSession,
-} from '../src/chat/transcript';
+} from '../src/features/chat/transcript';
 
 const SRC = `
 @story id=t title=测试
@@ -273,7 +273,7 @@ function traverseChatGraph(story: Story) {
 }
 
 describe('内置聊天剧本', () => {
-  it('小说版与对话版共享 src/stories 同一份主剧本且零错误编译，包含 chat_demo 与 majo_shinpan', () => {
+  it('小说版与对话版共享 content/stories 同一份主剧本且零错误编译，包含 chat_demo 与 majo_shinpan', () => {
     expect(builtIn.errors.map((e) => `${e.file}:${e.line} ${e.message}`)).toEqual([]);
     const ids = builtIn.stories.map((s) => s.meta.id);
     expect(ids).toContain('chat_demo');

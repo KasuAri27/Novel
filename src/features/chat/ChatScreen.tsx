@@ -5,8 +5,8 @@
  * 视觉：深粉毛玻璃——顶栏与底部浮层是磨砂玻璃，消息从它们下面滚过。
  */
 import { useEffect, useLayoutEffect, useRef, useState, type ChangeEvent, type ReactNode } from 'react';
-import type { Story, StoryChar } from '../engine/types';
-import { ImportDebugPanel } from '../ui/ImportDebugPanel';
+import type { Story, StoryChar } from '../../core/engine/types';
+import { ImportDebugPanel } from '../../shared/ImportDebugPanel';
 import {
   canUndo,
   chatStatus,

@@ -15,7 +15,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: false,
-      includeAssets: ['icon-192.png', 'icon-512.png'],
+      includeAssets: ['icons/icon-192.png', 'icons/icon-512.png'],
       manifest: {
         name: '魔法少女的魔女审判 · 互动小说',
         short_name: '魔女审判',
@@ -27,13 +27,14 @@ export default defineConfig({
         orientation: 'portrait',
         start_url: './',
         icons: [
-          { src: 'icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
         ],
       },
       workbox: {
         maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,svg,png,ico}'],
+        // webp：聊天头像 profiles/*.webp 需随 SW 预缓存，离线时才能显示
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,webp}'],
         cleanupOutdatedCaches: true,
         skipWaiting: true,
         clientsClaim: true,

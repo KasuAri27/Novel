@@ -3,8 +3,8 @@
  * UI 只调这里的动作，不直接碰引擎。
  */
 import { create } from 'zustand';
-import type { Story } from '../engine/types';
-import type { CompileError } from '../parser/compiler';
+import type { Story } from '../../core/engine/types';
+import type { CompileError } from '../../core/parser/compiler';
 import {
   buildLibrary,
   builtIn,
@@ -56,7 +56,7 @@ export function previewLine(story: Story): string {
 
 interface ChatStore {
   library: ChatLibraryItem[];
-  /** 内置剧本的编译错误（作者改坏 src/chats 时显示） */
+  /** 内置剧本的编译错误（作者改坏 content/chats 时显示） */
   builtInErrors: CompileError[];
   /** 最近一次导入的错误 */
   importErrors: CompileError[];

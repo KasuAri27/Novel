@@ -6,10 +6,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'src/stories/**/*.story.txt'
+      - 'content/stories/**/*.story.txt'
   pull_request:
     paths:
-      - 'src/stories/**/*.story.txt'
+      - 'content/stories/**/*.story.txt'
   workflow_dispatch:
 
 permissions:
@@ -40,4 +40,4 @@ jobs:
         if: github.event_name == 'push'
         run: |
           echo "变更的章节文件："
-          git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- 'src/stories/**/*.story.txt' || true
+          git diff --name-only ${{ github.event.before }} ${{ github.sha }} -- 'content/stories/**/*.story.txt' || true

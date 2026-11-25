@@ -3,8 +3,8 @@
  * 扫描 stories 目录下所有 .story.txt，以 ?raw 读入文本，交给 parser 编译成 Story。
  * 新增/替换剧情 = 往该目录放/换 .story.txt，无需改任何代码。
  */
-import type { Story } from '../engine/types';
-import { compileFiles, type CompileError } from '../parser/compiler';
+import type { Story } from '../core/engine/types';
+import { compileFiles, type CompileError } from '../core/parser/compiler';
 
 export interface StorySummary {
   id: string;
@@ -22,7 +22,7 @@ export interface LoadResult {
 }
 
 // Vite 在构建时把匹配的 .txt 作为原始字符串注入
-const rawModules = import.meta.glob('/src/stories/**/*.story.txt', {
+const rawModules = import.meta.glob('/content/stories/**/*.story.txt', {
   query: '?raw',
   import: 'default',
   eager: true,

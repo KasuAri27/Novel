@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { compileStory } from '../src/parser/compiler';
-import { createInitialState } from '../src/engine/state';
-import { AUTO_SLOT, MemoryStorage, loadAutosave, saveAutosave } from '../src/engine/persistence';
-import { chapterLabel, describeAutosave, readingPercent } from '../src/ui/player/progress';
+import { compileStory } from '../src/core/parser/compiler';
+import { createInitialState } from '../src/core/engine/state';
+import { AUTO_SLOT, MemoryStorage, loadAutosave, saveAutosave } from '../src/core/engine/persistence';
+import { chapterLabel, describeAutosave, readingPercent } from '../src/features/novel/progress';
 
 const DSL = [
   '@story id=t title=测试剧情',

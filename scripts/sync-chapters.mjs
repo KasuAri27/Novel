@@ -1,5 +1,5 @@
 /**
- * 章节同步脚本：仅检测 src/stories 下 .story.txt 变更 → 跑测试 → 提交 → 推送。
+ * 章节同步脚本：仅检测 content/stories 下 .story.txt 变更 → 跑测试 → 提交 → 推送。
  *
  * 工作流分工：
  *   - 书写模型：只改 chapterN.md（文稿源，不参与播放）
@@ -17,7 +17,7 @@ import { basename, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const ROOT = join(fileURLToPath(import.meta.url), '..', '..');
-const STORIES_DIR = join(ROOT, 'src', 'stories');
+const STORIES_DIR = join(ROOT, 'content', 'stories');
 const args = new Set(process.argv.slice(2));
 const isWatch = args.has('--watch');
 const isDryRun = args.has('--dry-run');
@@ -92,9 +92,9 @@ export function buildCommitMessage(changedFiles) {
 
 function collectChangedFilesUnderStories(filter) {
   const chunks = [
-    runCapture('git diff --name-only -- src/stories'),
-    runCapture('git diff --cached --name-only -- src/stories'),
-    runCapture('git ls-files --others --exclude-standard -- src/stories'),
+    runCapture('git diff --name-only -- content/stories'),
+    runCapture('git diff --cached --name-only -- content/stories'),
+    runCapture('git ls-files --others --exclude-standard -- content/stories'),
   ];
   return [
     ...new Set(

@@ -1,11 +1,11 @@
 /**
  * 聊天剧本库：
- *   - 内置：src/chats 下所有 .chat.txt（构建时打包；同 @story id 的多文件按文件名排序后合并编译，与小说剧本分开编译，互不合并）；
+ *   - 内置：content/chats 下所有 .chat.txt（构建时打包；同 @story id 的多文件按文件名排序后合并编译，与小说剧本分开编译，互不合并）；
  *   - 导入：玩家在页面上选的本地 .txt，原文存进 localStorage，刷新后重新编译。
  * 导入的剧本与内置剧本 @story id 相同时，以导入的为准（方便作者改完直接预览）。
  */
-import type { Story } from '../engine/types';
-import { compileFiles, type CompileError } from '../parser/compiler';
+import type { Story } from '../../core/engine/types';
+import { compileFiles, type CompileError } from '../../core/parser/compiler';
 
 export interface ImportedSource {
   name: string;
@@ -17,9 +17,9 @@ export interface ChatLibraryItem {
   imported: boolean;
 }
 
-import { loadAllStories } from '../content/loadStories';
+import { getStories } from '../../content/registry';
 
-const builtInRaw = import.meta.glob('/src/chats/**/*.chat.txt', {
+const builtInRaw = import.meta.glob('/content/chats/**/*.chat.txt', {
   query: '?raw',
   import: 'default',
   eager: true,
@@ -28,7 +28,8 @@ const builtInRaw = import.meta.glob('/src/chats/**/*.chat.txt', {
 const IMPORTS_KEY = 'inov:chat:imports';
 
 function compileBuiltIn(): { stories: Story[]; errors: CompileError[] } {
-  const storyResult = loadAllStories();
+  // 复用 registry 缓存，避免小说剧本在启动时被编译两遍
+  const storyResult = getStories();
   // 按文件名排序，确保分章文件顺序稳定，首章提供 @story meta 与 @entry
   const chatFiles = Object.entries(builtInRaw)
     .sort(([a], [b]) => a.localeCompare(b))

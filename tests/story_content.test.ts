@@ -1,13 +1,13 @@
 /**
- * 剧情内容校验：编译 src/stories 下所有 .story.txt，要求零错误；
+ * 剧情内容校验：编译 content/stories 下所有 .story.txt，要求零错误；
  * 并做结构性检查（入口、可达性、非叶子节点出口）。
  */
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { compileFiles } from '../src/parser/compiler';
+import { compileFiles } from '../src/core/parser/compiler';
 
-const storiesDir = join(__dirname, '../src/stories');
+const storiesDir = join(__dirname, '../content/stories');
 
 function collectStoryFiles(dir: string): string[] {
   const out: string[] = [];

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { lastVisualIndex, resolveTurn, spreadSlots } from '../src/ui/reader/paging';
-import { formatDialogueLine } from '../src/ui/reader/StoryLine';
+import { lastVisualIndex, resolveTurn, spreadSlots } from '../src/features/novel/reader/paging';
+import { formatDialogueLine } from '../src/features/novel/reader/StoryLine';
 
 describe('阅读器视觉翻页', () => {
   it('窄屏：最后一展就是正文末页；正文超出选项页容量时单占一展放选项', () => {

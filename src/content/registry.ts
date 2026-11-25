@@ -2,7 +2,7 @@
  * 运行期剧情注册表：加载一次，供 UI 选择/启动。
  * 与具体剧情无关，只做 id -> Story 的索引。
  */
-import type { Story } from '../engine/types';
+import type { Story } from '../core/engine/types';
 import { loadAllStories, type LoadResult } from './loadStories';
 
 let cache: LoadResult | null = null;

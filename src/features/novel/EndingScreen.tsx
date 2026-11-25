@@ -1,5 +1,5 @@
 /** 结局页：展示命中结局的标题与正文，提供重开/返回。 */
-import { selectEndedEnding, useEngineStore } from '../store/useEngineStore';
+import { selectEndedEnding, useEngineStore } from './useEngineStore';
 
 export function EndingScreen() {
   const story = useEngineStore((s) => s.story);

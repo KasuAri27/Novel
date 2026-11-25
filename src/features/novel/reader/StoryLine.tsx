@@ -1,4 +1,4 @@
-import type { Line } from '../../engine/types';
+import type { Line } from '../../../core/engine/types';
 
 export interface FormattedLine {
   speaker: string | null;

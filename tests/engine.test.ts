@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { compileStory } from '../src/parser/compiler';
-import { createInitialState, knowsFact } from '../src/engine/state';
-import { availableChoices, advance, choose, currentLine, nextPage, rewind } from '../src/engine/reducer';
-import { applyEffects } from '../src/engine/effects';
+import { compileStory } from '../src/core/parser/compiler';
+import { createInitialState, knowsFact } from '../src/core/engine/state';
+import { availableChoices, advance, choose, currentLine, nextPage, rewind } from '../src/core/engine/reducer';
+import { applyEffects } from '../src/core/engine/effects';
 
 const DSL = [
   '@story id=t title=T',

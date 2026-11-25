@@ -11,7 +11,7 @@ import {
   type KeyboardEvent,
   type PointerEvent,
 } from 'react';
-import type { Choice, Line } from '../../engine/types';
+import type { Choice, Line } from '../../../core/engine/types';
 import { PageFace, type PageMetrics } from './PageFace';
 import { lastVisualIndex, resolveTurn, spreadSlots, SPREAD_MIN_WIDTH, type FlipDir, type TurnPlan } from './paging';
 

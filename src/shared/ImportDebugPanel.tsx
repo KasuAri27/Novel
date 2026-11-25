@@ -1,5 +1,5 @@
 /** 导入调试面板：展示 parser 编译剧情时产生的带行号错误。 */
-import type { CompileError } from '../parser/compiler';
+import type { CompileError } from '../core/parser/compiler';
 
 interface Props {
   errors: CompileError[];

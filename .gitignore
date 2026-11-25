@@ -17,12 +17,17 @@ tsconfig.tsbuildinfo
 /.verify_*.png
 /step*.png
 
-# 原作素材与大文件目录（按 AGENTS.md 约束不入库）
+# 原作大素材不入库（目前未使用，需要时再拉取）
 public/backgrounds/
 public/portraits/
 public/ui/
 
 # 本地临时与工具文件
+.local/
 .playwright-mcp/
 .qoder-credits/
-story/
+.claude/
+*.bak
+
+# 书写稿（仅本地）
+content/drafts/

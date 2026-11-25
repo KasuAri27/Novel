@@ -1,17 +1,17 @@
 /** 标题页：闭书封面为进入阅读的主点击区；点开后翻开并镜头推进。 */
 import { useEffect, useRef, useState } from 'react';
-import { getStory } from '../content/registry';
+import { getStory } from '../../content/registry';
 import {
   selectCurrentNode,
   selectHasChoices,
   selectParagraphs,
   selectVisibleChoices,
   useEngineStore,
-} from '../store/useEngineStore';
-import { ImportDebugPanel } from './ImportDebugPanel';
-import { chapterLabel, excerptFrom } from './player/progress';
+} from './useEngineStore';
+import { ImportDebugPanel } from '../../shared/ImportDebugPanel';
+import { chapterLabel, excerptFrom } from './progress';
 import { StoryLine } from './reader/StoryLine';
-import { SettingsPanel } from './SettingsPanel';
+import { SettingsPanel } from '../../shared/SettingsPanel';
 
 type Phase = 'idle' | 'flip' | 'push';
 

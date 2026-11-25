@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest';
-import { compileStory } from '../src/parser/compiler';
-import { createInitialState } from '../src/engine/state';
-import { resolveEnding } from '../src/engine/ending';
-import type { GameState } from '../src/engine/types';
+import { compileStory } from '../src/core/parser/compiler';
+import { createInitialState } from '../src/core/engine/state';
+import { resolveEnding } from '../src/core/engine/ending';
+import type { GameState } from '../src/core/engine/types';
 
 const DSL = [
   '@story id=e title=E',

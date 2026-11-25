@@ -1,0 +1,67 @@
+/* ===================== 主题色板与 CSS 变量（亮/暗） ===================== */
+:root,
+[data-theme='light'] {
+  --night: #120f1c;
+  --night-2: #1f1c2e;
+  --night-3: #17141f;
+  --violet: #8c61db;
+  --violet-soft: #a98ae8;
+  --gold-ui: #dbb86b;
+  --muted-ui: #8c8594;
+  --line-ui: #383347;
+  --danger: #bf4752;
+  --bg: #120f1c;
+  --bg2: #1f1c2e;
+  --desk-1: #1a1628;
+  --desk-2: #120f1c;
+  --paper: #f5f0e5;
+  --paper-fill: #f5f0e5;
+  --paper-edge: #e8e0d1;
+  --ink: #1a1724;
+  --ink-soft: #8c8594;
+  --accent: #8c61db;
+  --accent2: #a98ae8;
+  --gold: #dbb86b;
+  --line: rgba(56, 51, 71, 0.45);
+  --ok: #3f7d53;
+  --err: #b23b3b;
+  --ink-on-dark: #f5f0e5;
+  --muted-on-dark: #8c8594;
+  --fg: #f5f0e5;
+  --muted: #8c8594;
+  --surface: #ffffff;
+  --btn-bg: #1f1c2e;
+  --btn-fg: #f5f0e5;
+  --panel-bg: #1f1c2e;
+  --panel-fg: #f5f0e5;
+  --panel-muted: #8c8594;
+  --overlay: rgba(18, 15, 28, 0.72);
+  --chrome: #1f1c2e;
+  --gear-bg: #8c61db;
+  --gear-fg: #fff;
+  --shadow: rgba(8, 6, 16, 0.45);
+  --curl-1: #e8d9c0;
+  --curl-2: #fbf6ec;
+  --curl-3: #dccdb5;
+  --choice-hover: #f7f2ff;
+  --stage-shadow: rgba(8, 6, 16, 0.55);
+  --reader-font: 18px;
+  --ui-font: ui-sans-serif, system-ui, 'PingFang SC', 'Noto Sans SC', sans-serif;
+  --book-font: 'Noto Serif SC', 'Songti SC', 'SimSun', Georgia, serif;
+  color-scheme: dark;
+  font-family: var(--book-font);
+}
+
+[data-theme='dark'] {
+  --paper: #2a2433;
+  --paper-fill: #2a2433;
+  --paper-edge: #3d3548;
+  --ink: #ebe6dc;
+  --ink-soft: #a89eb0;
+  --surface: #322b3d;
+  --choice-hover: #3a3248;
+  --curl-1: #3a342c;
+  --curl-2: #2a2622;
+  --curl-3: #1a1816;
+  color-scheme: dark;
+}

@@ -1,0 +1,430 @@
+/* ===================== 阅读页 ===================== */
+.play-screen {
+  position: relative;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--night);
+}
+
+.reader-topbar {
+  flex: none;
+  height: 56px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 0 24px;
+  background: var(--night-2);
+  color: #fff;
+  font-family: var(--ui-font);
+  z-index: 20;
+}
+
+.play-screen.is-enter .reader-topbar {
+  animation: topbar-in 200ms ease both;
+}
+
+@keyframes topbar-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.topbar-title {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+.topbar-tools {
+  display: flex;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
+.topbar-btn {
+  min-height: 36px;
+  border: none;
+  background: transparent;
+  color: #fff;
+  font-size: 14px;
+  font-family: var(--ui-font);
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+.topbar-tools .topbar-btn {
+  color: var(--muted-ui);
+}
+.topbar-btn:hover {
+  background: rgba(255, 255, 255, 0.06);
+  filter: none;
+}
+
+.reader {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  background: var(--paper-fill);
+  color: var(--ink);
+  display: flex;
+  flex-direction: column;
+  outline: none;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.book-shell {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  background: var(--paper);
+  overflow: hidden;
+  cursor: grab;
+  transform: translateZ(0);
+}
+.book-shell.is-grabbing {
+  cursor: grabbing;
+}
+
+.book-stack {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  perspective: 1800px;
+}
+
+.sheet {
+  position: absolute;
+  inset: 0;
+  background: var(--paper-fill);
+  color: var(--ink);
+}
+.sheet-under {
+  z-index: 1;
+  pointer-events: none;
+}
+.sheet-current {
+  z-index: 2;
+}
+.book-shell.is-flipping .sheet-current {
+  will-change: clip-path;
+}
+.sheet-current.sheet-fold-next::after,
+.sheet-current.sheet-fold-prev::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 36px;
+  pointer-events: none;
+  z-index: 3;
+}
+.sheet-current.sheet-fold-next::after {
+  right: 0;
+  background: linear-gradient(90deg, transparent, rgba(40, 24, 12, 0.16));
+}
+.sheet-current.sheet-fold-prev::after {
+  left: 0;
+  background: linear-gradient(270deg, transparent, rgba(40, 24, 12, 0.16));
+}
+
+.book-spread {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 20px 1fr;
+  height: 100%;
+  min-height: 0;
+}
+
+.book-gutter {
+  background: linear-gradient(90deg, #e8e0d1, #efe8d8 40%, #e8e0d1);
+  box-shadow:
+    inset 6px 0 10px rgba(80, 50, 20, 0.06),
+    inset -6px 0 10px rgba(80, 50, 20, 0.06);
+}
+
+.leaf {
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 36px 48px 56px;
+  display: flex;
+  flex-direction: column;
+}
+
+.leaf-pagenum {
+  flex: none;
+  font-size: 12px;
+  color: var(--ink-soft);
+  margin-bottom: 18px;
+  font-family: var(--ui-font);
+}
+
+/* 阅读器左右页高度必须一致，页码改成浮层，避免左页被挤矮、右页多出一行 */
+.book-shell .leaf {
+  position: relative;
+  padding-top: 52px;
+}
+.book-shell .leaf-pagenum {
+  position: absolute;
+  top: 16px;
+  left: 48px;
+  right: 48px;
+  margin-bottom: 0;
+  pointer-events: none;
+}
+
+.page-measure {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.page-clip {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  height: 100%;
+  width: 100%;
+}
+.page-flow {
+  height: 100%;
+  min-height: 100%;
+  column-gap: 0;
+  column-fill: auto;
+  will-change: transform;
+}
+.page-flow p,
+.page-clip > p,
+.page-leaf p,
+.choices-pane p,
+.title-spread .leaf-left p {
+  margin: 0 0 1.15em;
+  line-height: 2.05;
+  font-size: var(--reader-font);
+  color: var(--ink);
+  text-align: justify;
+  text-justify: inter-ideograph;
+  orphans: 2;
+  widows: 2;
+}
+.line-narr {
+  text-indent: 2em;
+}
+.line-say {
+  text-indent: 0;
+  color: var(--ink);
+}
+.say-speaker {
+  color: var(--violet);
+  font-weight: 650;
+}
+.say-act {
+  color: var(--ink-soft);
+  font-style: italic;
+}
+.page-clip .dim,
+.page-leaf .dim {
+  color: var(--ink-soft);
+  font-style: italic;
+  text-indent: 0;
+  text-align: left;
+}
+.page-leaf {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+}
+.page-leaf p {
+  text-indent: 0;
+  text-align: center;
+}
+
+.book-cast {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 3;
+  pointer-events: none;
+}
+.book-cast-next {
+  right: 0;
+  width: var(--fold-inv);
+  background: linear-gradient(90deg, rgba(20, 12, 6, 0.42), transparent 72%);
+}
+.book-cast-prev {
+  left: 0;
+  width: var(--fold-inv);
+  background: linear-gradient(270deg, rgba(20, 12, 6, 0.42), transparent 72%);
+}
+
+.book-curl {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  z-index: 4;
+  pointer-events: none;
+  transform-style: preserve-3d;
+}
+.book-curl-next {
+  left: var(--fold);
+  transform-origin: left center;
+  transform: perspective(900px) rotateY(-32deg);
+  border-radius: 0 3px 3px 0;
+  background: linear-gradient(
+    90deg,
+    rgba(40, 24, 12, 0.28) 0%,
+    var(--curl-1) 14%,
+    var(--curl-2) 46%,
+    var(--curl-3) 76%,
+    rgba(40, 24, 12, 0.2) 100%
+  );
+  box-shadow:
+    12px 0 28px rgba(0, 0, 0, 0.33),
+    -7px 0 12px rgba(0, 0, 0, 0.12);
+}
+.book-curl-prev {
+  left: var(--fold-inv);
+  transform-origin: right center;
+  transform: perspective(900px) rotateY(32deg) translateX(-100%);
+  border-radius: 3px 0 0 3px;
+  background: linear-gradient(
+    270deg,
+    rgba(40, 24, 12, 0.28) 0%,
+    var(--curl-1) 14%,
+    var(--curl-2) 46%,
+    var(--curl-3) 76%,
+    rgba(40, 24, 12, 0.2) 100%
+  );
+  box-shadow:
+    -12px 0 28px rgba(0, 0, 0, 0.33),
+    7px 0 12px rgba(0, 0, 0, 0.12);
+}
+
+.reader-progress {
+  position: absolute;
+  left: 48px;
+  right: 48px;
+  bottom: 16px;
+  z-index: 12;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+  font-family: var(--ui-font);
+  font-size: 12px;
+  color: var(--ink-soft);
+}
+.reader-progress-track {
+  flex: 1;
+  height: 6px;
+  border-radius: 99px;
+  background: var(--line-ui);
+  overflow: hidden;
+}
+.reader-progress-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--violet);
+}
+
+.reader-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 52px;
+  z-index: 10;
+  transform: translateX(-50%);
+  padding: 8px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  letter-spacing: 1px;
+  color: var(--ink-soft);
+  background: var(--surface);
+  border: 1px solid var(--paper-edge);
+  pointer-events: none;
+  animation: hint-in 0.45s ease;
+  font-family: var(--ui-font);
+}
+@keyframes hint-in {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%);
+  }
+}
+
+.choices-pane {
+  pointer-events: auto;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  touch-action: pan-y;
+  width: 100%;
+  padding-top: 8px;
+}
+.choices-pane-empty {
+  pointer-events: none;
+}
+.book-shell.is-flipping .choice-card {
+  pointer-events: none;
+}
+.choices-kicker {
+  margin: 0 0 18px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  color: var(--gold-ui);
+  font-family: var(--ui-font);
+}
+.choices {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.choice-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  text-align: left;
+  width: 100%;
+  min-height: 68px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line-ui);
+  border-radius: 12px;
+  padding: 16px 20px;
+  font-size: 16px;
+  line-height: 1.5;
+  font-family: var(--ui-font);
+}
+.choice-card:hover {
+  background: var(--choice-hover);
+  transform: translateY(-1px);
+}
+.choice-letter {
+  flex: none;
+  width: 1.4em;
+  color: var(--violet);
+  font-weight: 800;
+}
+.choice-label {
+  flex: 1;
+}

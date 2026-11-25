@@ -10,11 +10,11 @@ import {
   selectPeekPrev,
   selectVisibleChoices,
   useEngineStore,
-} from '../store/useEngineStore';
-import { chapterLabel, readingPercent } from './player/progress';
+} from './useEngineStore';
+import { chapterLabel, readingPercent } from './progress';
 import { BookReader, type BookNav } from './reader/BookReader';
-import { SettingsPanel } from './SettingsPanel';
-import { useReaderPrefs } from './theme/readerPrefs';
+import { SettingsPanel } from '../../shared/SettingsPanel';
+import { useReaderPrefs } from '../../shared/theme/readerPrefs';
 
 type Panel = 'none' | 'settings' | 'toc' | 'menu' | 'log';
 

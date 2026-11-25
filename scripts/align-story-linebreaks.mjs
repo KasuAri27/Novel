@@ -233,7 +233,7 @@ function serialize(parsed) {
 
 for (const n of TARGETS) {
   const md = readFileSync(join(ROOT, `chapter${n}.md`), 'utf-8');
-  const storyPath = join(ROOT, `src/stories/majo_shinpan/chapter${n}.story.txt`);
+  const storyPath = join(ROOT, `content/stories/majo_shinpan/chapter${n}.story.txt`);
   const parsed = parseStory(readFileSync(storyPath, 'utf-8'));
   alignChapter(n, md, parsed);
   writeFileSync(storyPath, serialize(parsed), 'utf-8');
