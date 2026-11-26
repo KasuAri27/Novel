@@ -30,14 +30,18 @@ export function formatDialogueLine(speaker: string | null, rawText: string): For
   return { speaker, action, speech };
 }
 
-/** 渲染单行正文：旁白与对话统一兼容单源剧本格式。 */
-export function StoryLine({ line }: { line: Line }) {
+/** 渲染单行正文：旁白与对话统一兼容单源剧本格式。index 写进 data-i，供分页测量定位。 */
+export function StoryLine({ line, index }: { line: Line; index?: number }) {
   const fmt = formatDialogueLine(line.speaker, line.text);
   if (!fmt.speaker) {
-    return <p className="line-narr">{fmt.speech}</p>;
+    return (
+      <p className="line-narr" data-i={index}>
+        {fmt.speech}
+      </p>
+    );
   }
   return (
-    <p className="line-say">
+    <p className="line-say" data-i={index}>
       <span className="say-speaker">{fmt.speaker}</span>
       {fmt.action && <span className="say-act">{fmt.action}</span>}
       {fmt.speech ? `：${fmt.speech}` : null}

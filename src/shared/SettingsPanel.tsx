@@ -1,68 +1,59 @@
-/** 设置面板：外观与阅读操作。无存档槽位。 */
-import { FONT_LABEL, useReaderPrefs, type FontSize } from './theme/readerPrefs';
+/** 阅读设置：字号、行距、外观。只改排版偏好，不碰阅读进度。 */
+import {
+  FONT_LABEL,
+  FONT_OPTIONS,
+  SPACING_LABEL,
+  SPACING_OPTIONS,
+  useReaderPrefs,
+} from './theme/readerPrefs';
 import { ThemeSwitch } from './theme/ThemeSwitch';
 
-interface Props {
-  canRewind?: boolean;
-  onRewind?: () => void;
-  onRestart?: () => void;
-  onBack?: () => void;
-  /** 标题页只显示外观，阅读页再给出回退/重开 */
-  showReadingActions?: boolean;
-}
-
-const FONT_OPTS: FontSize[] = ['sm', 'md', 'lg'];
-
-export function SettingsPanel(p: Props) {
+export function SettingsPanel() {
   const fontSize = useReaderPrefs((s) => s.fontSize);
   const setFontSize = useReaderPrefs((s) => s.setFontSize);
-  const showReading = p.showReadingActions !== false && (p.onRewind || p.onRestart || p.onBack);
+  const lineSpacing = useReaderPrefs((s) => s.lineSpacing);
+  const setLineSpacing = useReaderPrefs((s) => s.setLineSpacing);
 
   return (
     <div className="panel-inner">
-      <h4>外观</h4>
-      <ThemeSwitch />
+      <h4>字号</h4>
+      <div className="theme-switch" role="radiogroup" aria-label="字号">
+        {FONT_OPTIONS.map((id) => (
+          <button
+            key={id}
+            type="button"
+            role="radio"
+            aria-checked={fontSize === id}
+            className={fontSize === id ? 'is-on' : undefined}
+            onClick={() => setFontSize(id)}
+          >
+            {FONT_LABEL[id]}
+          </button>
+        ))}
+      </div>
 
       <div className="section-gap">
-        <h4>字号</h4>
-        <div className="theme-switch" role="radiogroup" aria-label="字号">
-          {FONT_OPTS.map((id) => (
+        <h4>行距</h4>
+        <div className="theme-switch" role="radiogroup" aria-label="行距">
+          {SPACING_OPTIONS.map((id) => (
             <button
               key={id}
               type="button"
               role="radio"
-              aria-checked={fontSize === id}
-              className={fontSize === id ? 'is-on' : undefined}
-              onClick={() => setFontSize(id)}
+              aria-checked={lineSpacing === id}
+              className={lineSpacing === id ? 'is-on' : undefined}
+              onClick={() => setLineSpacing(id)}
             >
-              {FONT_LABEL[id]}
+              {SPACING_LABEL[id]}
             </button>
           ))}
         </div>
       </div>
 
-      {showReading && (
-        <div className="section-gap">
-          <h4>操作</h4>
-          <div className="settings-actions">
-            {p.onRewind && (
-              <button type="button" className="ghost" disabled={!p.canRewind} onClick={p.onRewind}>
-                回退一页
-              </button>
-            )}
-            {p.onRestart && (
-              <button type="button" className="ghost" onClick={p.onRestart}>
-                从头阅读
-              </button>
-            )}
-          </div>
-          {p.onBack && (
-            <button type="button" className="ghost settings-back" onClick={p.onBack}>
-              返回标题
-            </button>
-          )}
-        </div>
-      )}
+      <div className="section-gap">
+        <h4>外观</h4>
+        <ThemeSwitch />
+      </div>
     </div>
   );
 }

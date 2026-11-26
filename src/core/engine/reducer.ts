@@ -91,7 +91,9 @@ export function choose(state: GameState, story: Story, choiceId: string): GameSt
 
   const base = step(state);
   const afterEffects = applyEffects(base, story, choice.do);
-  return enterNode(afterEffects, story, choice.goto);
+  const entered = enterNode(afterEffects, story, choice.goto);
+  entered.lastChoice = { nodeId: node.id, choiceId: choice.id };
+  return entered;
 }
 
 /**
@@ -126,6 +128,15 @@ export function rewind(state: GameState): GameState {
   if (!last) return state;
   const restored: GameState = { ...last, history: state.history.slice(0, -1) };
   return restored;
+}
+
+/**
+ * 回退到历史第 index 步时的状态（0 = 最早的快照），并丢弃其后的历史。
+ * index 越界时原样返回。
+ */
+export function rewindTo(state: GameState, index: number): GameState {
+  if (!Number.isInteger(index) || index < 0 || index >= state.history.length) return state;
+  return { ...state.history[index], history: state.history.slice(0, index) };
 }
 
 /** 重开：回到初始状态 */

@@ -1,17 +1,12 @@
 /** 标题页：闭书封面为进入阅读的主点击区；点开后翻开并镜头推进。 */
 import { useEffect, useRef, useState } from 'react';
 import { getStory } from '../../content/registry';
-import {
-  selectCurrentNode,
-  selectHasChoices,
-  selectParagraphs,
-  selectVisibleChoices,
-  useEngineStore,
-} from './useEngineStore';
+import { selectSegment, useEngineStore } from './useEngineStore';
 import { ImportDebugPanel } from '../../shared/ImportDebugPanel';
-import { chapterLabel, excerptFrom } from './progress';
+import { chapterLabel, chapterTitle, excerptFrom } from './progress';
 import { StoryLine } from './reader/StoryLine';
 import { SettingsPanel } from '../../shared/SettingsPanel';
+import type { Choice, Line } from '../../core/engine/types';
 
 type Phase = 'idle' | 'flip' | 'push';
 
@@ -36,11 +31,8 @@ export function TitleScreen() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const timers = useRef<number[]>([]);
 
-  const story = useEngineStore((s) => s.story);
-  const node = useEngineStore(selectCurrentNode);
-  const paragraphs = useEngineStore(selectParagraphs);
-  const choices = useEngineStore(selectVisibleChoices);
-  const hasChoices = useEngineStore(selectHasChoices);
+  const seg = useEngineStore(selectSegment);
+  const landing = useEngineStore((s) => s.landing);
 
   useEffect(() => {
     return () => {
@@ -56,8 +48,21 @@ export function TitleScreen() {
     save?.excerpt ?? (fallback ? excerptFrom(fallback, fallback.entry) : '点右侧书本进入阅读');
   const coverPercent = save?.percent;
 
-  const openPreviewLines = (story && node ? paragraphs : fallback?.nodes[fallback.entry]?.lines) ?? [];
-  const openPreviewChoices = story && node && hasChoices ? choices : [];
+  // 翻书动画里的预览页：尽量与进入阅读后的第一眼一致（续读时从上次那一页的首行起）
+  let openHeading: string | null = null;
+  let openPreviewLines: Line[] = [];
+  let openPreviewChoices: Choice[] = [];
+  if (seg) {
+    const a = landing.anchor;
+    const from = a === 'start' ? 0 : a === 'end' ? Math.max(0, seg.lines.length - 3) : a.line;
+    openHeading = from === 0 ? seg.heading : null;
+    openPreviewLines = seg.lines.slice(from, from + 3);
+    if (a === 'end' && seg.hasChoices) openPreviewChoices = seg.choices;
+  } else if (fallback) {
+    openHeading = chapterTitle(0);
+    openPreviewLines = fallback.nodes[fallback.entry]?.lines ?? [];
+  }
+  const openChapter = seg ? chapterTitle(seg.chapter) : coverChapter;
 
   const clearTimers = () => {
     timers.current.forEach((id) => window.clearTimeout(id));
@@ -167,7 +172,8 @@ export function TitleScreen() {
         <div className="title-book-open" aria-hidden={phase === 'idle'}>
           <div className="book-spread title-spread">
             <div className="leaf leaf-left">
-              <div className="leaf-pagenum">{coverPercent ?? '·'}</div>
+              <div className="leaf-head">{openChapter}</div>
+              {openHeading && <h2 className="flow-heading">{openHeading}</h2>}
               {openPreviewLines.slice(0, 3).map((ln, i) => (
                 <StoryLine key={i} line={ln} />
               ))}
@@ -244,7 +250,7 @@ export function TitleScreen() {
                 关闭
               </button>
             </header>
-            <SettingsPanel showReadingActions={false} />
+            <SettingsPanel />
           </div>
         </div>
       )}

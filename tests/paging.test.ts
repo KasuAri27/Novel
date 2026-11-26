@@ -1,140 +1,141 @@
 import { describe, expect, it } from 'vitest';
-import { lastVisualIndex, resolveTurn, spreadSlots } from '../src/features/novel/reader/paging';
+import {
+  anchorToIndex,
+  indexToAnchor,
+  lastIndex,
+  resolveTurn,
+  spreadLayout,
+  spreadLines,
+  type LineMap,
+  type PageModel,
+} from '../src/features/novel/reader/paging';
 import { formatDialogueLine } from '../src/features/novel/reader/StoryLine';
 
-describe('阅读器视觉翻页', () => {
-  it('窄屏：最后一展就是正文末页；正文超出选项页容量时单占一展放选项', () => {
-    expect(lastVisualIndex(3, false, 1)).toBe(2);
-    expect(lastVisualIndex(1, false, 1)).toBe(0);
-    expect(lastVisualIndex(3, true, 1)).toBe(2);
-    expect(lastVisualIndex(3, true, 1, true)).toBe(3);
-    expect(lastVisualIndex(1, true, 1, true)).toBe(1);
+const model = (pages: number, hasChoices = false, choicesFit = false, perSpread = 1): PageModel => ({
+  pages,
+  hasChoices,
+  choicesFit,
+  perSpread,
+});
+
+describe('阅读器分页：选项摆放', () => {
+  it('窄屏：末页放得下选项就不加页，放不下才单独加一页', () => {
+    expect(lastIndex(model(3))).toBe(2);
+    expect(lastIndex(model(1))).toBe(0);
+    expect(lastIndex(model(3, true, true))).toBe(2);
+    expect(lastIndex(model(3, true, false))).toBe(3);
+    expect(lastIndex(model(1, true, false))).toBe(1);
   });
 
-  it('PC 对开：4 页正文合成 2 展', () => {
-    expect(lastVisualIndex(4, false, 2)).toBe(1);
-    expect(lastVisualIndex(3, false, 2)).toBe(1);
-    expect(lastVisualIndex(1, false, 2)).toBe(0);
+  it('窄屏：选项接在末页正文下方（同一页同时出现正文和选项）', () => {
+    expect(spreadLayout(2, model(3, true, true))).toEqual({
+      left: { kind: 'text', page: 2, overlay: true },
+      right: { kind: 'empty' },
+      showChoices: true,
+      choiceSpread: false,
+    });
+    // 放不下：末页只有正文，下一页是「上下文 + 选项」
+    expect(spreadLayout(2, model(3, true, false)).showChoices).toBe(false);
+    expect(spreadLayout(3, model(3, true, false))).toEqual({
+      left: { kind: 'context' },
+      right: { kind: 'choices' },
+      showChoices: true,
+      choiceSpread: true,
+    });
   });
 
-  it('PC 对开且选项：偶数页正文后再加一展放选项', () => {
-    expect(lastVisualIndex(4, true, 2)).toBe(2);
-    expect(lastVisualIndex(3, true, 2)).toBe(1);
-    expect(lastVisualIndex(1, true, 2)).toBe(0);
+  it('PC 对开：奇数页正文时选项放末展右页', () => {
+    expect(lastIndex(model(3, true, false, 2))).toBe(1);
+    expect(spreadLayout(1, model(3, true, false, 2))).toEqual({
+      left: { kind: 'text', page: 2, overlay: false },
+      right: { kind: 'choices' },
+      showChoices: true,
+      choiceSpread: false,
+    });
   });
 
-  it('PC 对开槽位：左右各一栏正文', () => {
-    expect(spreadSlots(0, 4, false, 2)).toEqual({ left: 0, right: 1, showChoices: false });
-    expect(spreadSlots(1, 4, false, 2)).toEqual({ left: 2, right: 3, showChoices: false });
-    expect(spreadSlots(1, 3, false, 2)).toEqual({ left: 2, right: null, showChoices: false });
+  it('PC 对开：偶数页正文时选项优先接在右页正文下方，放不下才另起一展（左页给上下文）', () => {
+    expect(lastIndex(model(4, true, true, 2))).toBe(1);
+    expect(spreadLayout(1, model(4, true, true, 2)).right).toEqual({ kind: 'text', page: 3, overlay: true });
+    expect(lastIndex(model(4, true, false, 2))).toBe(2);
+    expect(spreadLayout(2, model(4, true, false, 2))).toEqual({
+      left: { kind: 'context' },
+      right: { kind: 'choices' },
+      showChoices: true,
+      choiceSpread: true,
+    });
   });
 
-  it('窄屏槽位：只有左栏，选项在末页（超出容量时独立一展且 left 为 null）', () => {
-    expect(spreadSlots(0, 3, false, 1)).toEqual({ left: 0, right: null, showChoices: false });
-    expect(spreadSlots(2, 3, true, 1)).toEqual({ left: 2, right: null, showChoices: true });
-    expect(spreadSlots(2, 3, true, 1, true)).toEqual({ left: 2, right: null, showChoices: false });
-    expect(spreadSlots(3, 3, true, 1, true)).toEqual({ left: null, right: null, showChoices: true });
-    expect(
-      resolveTurn({
-        dir: 'next',
-        visualIndex: 2,
-        textPageCount: 3,
-        hasChoices: true,
-        canRewind: true,
-        perSpread: 1,
-        choiceOverflow: true,
-      }),
-    ).toEqual({ kind: 'local', nextIndex: 3 });
+  it('PC 对开：无选项时 4 页正文合成 2 展，奇数页末展右页留空', () => {
+    expect(lastIndex(model(4, false, false, 2))).toBe(1);
+    expect(lastIndex(model(3, false, false, 2))).toBe(1);
+    expect(spreadLayout(1, model(3, false, false, 2)).right).toEqual({ kind: 'empty' });
+  });
+});
+
+describe('阅读器分页：翻页决策', () => {
+  it('段内向后翻走 local；末页有选项被挡住；末页无选项交给引擎', () => {
+    expect(resolveTurn({ dir: 'next', index: 0, model: model(3), canRewind: false })).toEqual({
+      kind: 'local',
+      nextIndex: 1,
+    });
+    expect(resolveTurn({ dir: 'next', index: 2, model: model(3, true, true), canRewind: true })).toEqual({
+      kind: 'blocked',
+    });
+    expect(resolveTurn({ dir: 'next', index: 2, model: model(3, true, false), canRewind: true })).toEqual({
+      kind: 'local',
+      nextIndex: 3,
+    });
+    expect(resolveTurn({ dir: 'next', index: 2, model: model(3), canRewind: true })).toEqual({
+      kind: 'engine-next',
+    });
   });
 
-  it('PC 对开槽位：奇数末页右侧给选项', () => {
-    expect(spreadSlots(1, 3, true, 2)).toEqual({ left: 2, right: null, showChoices: true });
-    expect(spreadSlots(2, 4, true, 2)).toEqual({ left: null, right: null, showChoices: true });
+  it('段首往回：无历史被挡住，有历史交给引擎回退', () => {
+    expect(resolveTurn({ dir: 'prev', index: 0, model: model(3), canRewind: false })).toEqual({ kind: 'blocked' });
+    expect(resolveTurn({ dir: 'prev', index: 0, model: model(3), canRewind: true })).toEqual({ kind: 'engine-prev' });
+    expect(resolveTurn({ dir: 'prev', index: 2, model: model(3), canRewind: false })).toEqual({
+      kind: 'local',
+      nextIndex: 1,
+    });
+  });
+});
+
+describe('阅读锚点：换字号 / 转屏 / 续读都落回同一处', () => {
+  // 5 行正文排 3 页：第 1 行跨 0–1 页，第 3 行跨 1–2 页
+  const map: LineMap = { first: [0, 0, 1, 1, 2], last: [0, 1, 1, 2, 2] };
+
+  it('展序号与锚点可以互相还原', () => {
+    for (const per of [1, 2]) {
+      const m = model(3, false, false, per);
+      for (let i = 0; i <= lastIndex(m); i++) {
+        expect(anchorToIndex(indexToAnchor(i, m, map), m, map)).toBe(i);
+      }
+    }
   });
 
-  it('节点内向后翻走 local', () => {
-    expect(
-      resolveTurn({
-        dir: 'next',
-        visualIndex: 0,
-        textPageCount: 3,
-        hasChoices: false,
-        canRewind: false,
-      }),
-    ).toEqual({ kind: 'local', nextIndex: 1 });
+  it('段落跨页时用 offset 记住「续页」', () => {
+    expect(indexToAnchor(1, model(3), map)).toEqual({ line: 1, offset: 1 });
+    expect(anchorToIndex({ line: 1, offset: 1 }, model(3), map)).toBe(1);
+    expect(anchorToIndex({ line: 1, offset: 0 }, model(3), map)).toBe(0);
   });
 
-  it('PC 对开首页下一展', () => {
-    expect(
-      resolveTurn({
-        dir: 'next',
-        visualIndex: 0,
-        textPageCount: 4,
-        hasChoices: false,
-        canRewind: false,
-        perSpread: 2,
-      }),
-    ).toEqual({ kind: 'local', nextIndex: 1 });
+  it('窄屏的锚点换到 PC 对开时落在包含该页的那一展', () => {
+    const anchor = indexToAnchor(2, model(3), map);
+    expect(anchorToIndex(anchor, model(3, false, false, 2), map)).toBe(1);
   });
 
-  it('正文末页且有选项 → 不能再往后翻，需点选', () => {
-    expect(
-      resolveTurn({
-        dir: 'next',
-        visualIndex: 2,
-        textPageCount: 3,
-        hasChoices: true,
-        canRewind: true,
-      }),
-    ).toEqual({ kind: 'blocked' });
+  it('start / end 分别落在第一展和最后一展（含独立选项页）', () => {
+    expect(anchorToIndex('start', model(3, true, false), map)).toBe(0);
+    expect(anchorToIndex('end', model(3, true, false), map)).toBe(3);
+    expect(anchorToIndex('end', model(3, true, true), map)).toBe(2);
   });
 
-  it('正文末页且无选项 → 引擎下一节点', () => {
-    expect(
-      resolveTurn({
-        dir: 'next',
-        visualIndex: 2,
-        textPageCount: 3,
-        hasChoices: false,
-        canRewind: true,
-      }),
-    ).toEqual({ kind: 'engine-next' });
-  });
-
-  it('仅一页正文且有选项 → 不能再下一页', () => {
-    expect(
-      resolveTurn({
-        dir: 'next',
-        visualIndex: 0,
-        textPageCount: 1,
-        hasChoices: true,
-        canRewind: true,
-      }),
-    ).toEqual({ kind: 'blocked' });
-  });
-
-  it('首页且无历史 → 上一页被挡住', () => {
-    expect(
-      resolveTurn({
-        dir: 'prev',
-        visualIndex: 0,
-        textPageCount: 3,
-        hasChoices: false,
-        canRewind: false,
-      }),
-    ).toEqual({ kind: 'blocked' });
-  });
-
-  it('首页且有历史 → 引擎回退', () => {
-    expect(
-      resolveTurn({
-        dir: 'prev',
-        visualIndex: 0,
-        textPageCount: 3,
-        hasChoices: false,
-        canRewind: true,
-      }),
-    ).toEqual({ kind: 'engine-prev' });
+  it('每展可见的首行 / 末行', () => {
+    expect(spreadLines(1, model(3), map)).toEqual({ top: 1, bottom: 3 });
+    expect(spreadLines(0, model(3, false, false, 2), map)).toEqual({ top: 0, bottom: 3 });
+    expect(spreadLines(3, model(3, true, false), map)).toEqual({ top: 4, bottom: 4 });
+    expect(spreadLines(0, model(1), { first: [], last: [] })).toBeNull();
   });
 });
 

@@ -133,6 +133,8 @@ export interface GameState {
   ended: EndingId | null;
   /** 当前节点内已推进到的行指针（打字机/逐行显示用） */
   lineIndex: number;
+  /** 最近一次做出的选择（小说模式的选择回显 / 回顾用）；旧存档里没有这个字段 */
+  lastChoice?: { nodeId: NodeId; choiceId: string } | null;
 }
 
 /** 去掉 history 的历史快照，避免嵌套膨胀 */

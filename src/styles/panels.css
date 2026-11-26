@@ -75,42 +75,104 @@
   filter: none;
 }
 
-.toc-current {
-  color: var(--gold-ui);
-  font-size: 14px;
-  margin: 8px 0 12px;
-}
-.toc-note {
-  margin: 0 0 28px;
-  font-size: 14px;
-  line-height: 1.7;
-}
-.toc-back {
-  min-height: 44px;
+.overflow-menu button:disabled {
+  background: transparent;
 }
 
+/* 目录：章节列表，已读章节可回到章首重读 */
+.toc-list {
+  list-style: none;
+  margin: 8px 0 4px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toc-item {
+  width: 100%;
+  min-height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--panel-fg);
+  text-align: left;
+  font-size: 15px;
+}
+.toc-item.is-current {
+  border-color: var(--violet);
+  background: rgba(140, 97, 219, 0.14);
+}
+.toc-status {
+  flex: none;
+  font-size: 13px;
+  color: var(--panel-muted);
+}
+.toc-item.is-current .toc-status {
+  color: var(--gold-ui);
+}
+.toc-note {
+  margin: 14px 0 6px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--panel-muted);
+}
+
+/* 回顾：完整正文 + 章节标题 + 做过的选择（面板在两种主题下都是深底） */
 .backlog {
   display: flex;
   flex-direction: column;
-  gap: 22px;
-  padding-bottom: 12px;
+  padding: 4px 0 12px;
+  font-family: var(--book-font);
 }
-.backlog-node p {
-  margin: 0 0 8px;
-  line-height: 1.8;
+.backlog p {
+  margin: 0 0 10px;
+  line-height: 1.85;
   font-size: 15px;
+  color: var(--panel-fg);
 }
-.backlog-who {
-  display: block;
-  font-size: 12px;
+.backlog .line-say {
+  color: var(--panel-fg);
+}
+.backlog .say-speaker {
+  color: var(--violet-soft);
+}
+.backlog .say-act {
+  color: var(--panel-muted);
+}
+.backlog-heading {
+  margin: 18px 0 14px;
+  text-align: center;
+  font-size: 14px;
+  letter-spacing: 0.14em;
   color: var(--gold-ui);
-  margin-bottom: 4px;
+  font-family: var(--ui-font);
+  text-transform: none;
+}
+.backlog p.backlog-choice {
+  margin: 12px 0 16px;
+  padding: 8px 12px;
+  border-left: 3px solid var(--violet-soft);
+  border-radius: 0 8px 8px 0;
+  background: rgba(255, 255, 255, 0.05);
+  font-size: 14px;
+  line-height: 1.6;
+}
+.backlog-choice-tag {
+  margin-right: 8px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--gold-ui);
   font-family: var(--ui-font);
 }
 
 .theme-switch {
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
   gap: 8px;
   margin: 8px 0 4px;
 }

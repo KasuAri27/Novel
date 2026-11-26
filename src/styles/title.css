@@ -217,9 +217,9 @@
 .title-screen[data-phase='push'] .title-book {
   right: 0;
   left: 0;
-  top: 56px;
+  top: 0;
   width: 100%;
-  height: calc(100% - 56px);
+  height: 100%;
   transform: none;
   border-radius: 0;
   box-shadow: none;

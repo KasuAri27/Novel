@@ -38,6 +38,7 @@ export function createInitialState(story: Story): GameState {
     history: [],
     ended: null,
     lineIndex: 0,
+    lastChoice: null,
   };
 }
 
@@ -54,6 +55,7 @@ export function cloneState(state: GameState): GameState {
     history: state.history,
     ended: state.ended,
     lineIndex: state.lineIndex,
+    lastChoice: state.lastChoice ? { ...state.lastChoice } : null,
   };
 }
 

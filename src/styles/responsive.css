@@ -33,11 +33,11 @@
   }
   .title-screen[data-phase='push'] .title-book {
     position: absolute;
-    top: 56px;
+    top: 0;
     left: 0;
     right: 0;
     width: 100%;
-    height: calc(100% - 56px);
+    height: 100%;
     margin: 0;
   }
 }
@@ -53,51 +53,51 @@
   .leaf {
     padding: 24px 20px 44px;
   }
+  /* 顶部留白让出浮动菜单栏（48px）；页眉在其下方 */
   .book-shell .leaf {
-    padding-top: 36px;
+    padding-top: 52px;
   }
-  .book-shell .leaf-pagenum {
+  .book-shell .leaf-head {
+    top: 18px;
     left: 20px;
     right: 20px;
   }
-  /* 窄屏无选项时不要把空右栏挤掉正文（含 .page-measure） */
-  .book-shell .book-spread:not(.has-choices) > .leaf-right {
+  /* 窄屏只有一栏：普通页把空右栏收起来（含 .page-measure） */
+  .book-shell .book-spread:not(.choice-spread) > .leaf-right {
     display: none;
   }
-  /* 窄屏有选项时，正文自适应上半部，选项完全展开于下半部，告别挤压滚动 */
-  .book-shell .sheet > .book-spread.has-choices {
+  /* 末页放不下选项时的独立选项页：上方几行正文作上下文，下方完整展开选项 */
+  .book-shell .sheet > .book-spread.choice-spread {
     display: flex;
     flex-direction: column;
     height: 100%;
   }
-  .book-shell .sheet > .book-spread.has-choices > .leaf-left {
+  .book-shell .sheet > .book-spread.choice-spread > .leaf-left {
     flex: 0 0 auto;
     height: auto;
     max-height: 38%;
     padding-bottom: 8px;
     overflow: hidden;
   }
-  .book-shell .sheet > .book-spread.has-choices.no-context > .leaf-left {
-    display: none;
-  }
   .book-shell .choice-context {
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
+    touch-action: pan-y;
   }
   .book-shell .choice-context p:last-child {
     margin-bottom: 0;
   }
-  .book-shell .sheet > .book-spread.has-choices > .leaf-right {
+  .book-shell .sheet > .book-spread.choice-spread > .leaf-right {
     display: flex;
     flex-direction: column;
     flex: 1 1 auto;
     min-height: 0;
     max-height: none;
-    padding-top: 0;
-    padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+    padding-top: 12px;
+    padding-bottom: max(44px, env(safe-area-inset-bottom, 0px));
   }
-  .book-shell .sheet > .book-spread.has-choices .choices-pane {
+  .book-shell .sheet > .book-spread.choice-spread .choices-pane {
     flex: 1 1 auto;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
@@ -127,13 +127,14 @@
   .reader-progress {
     left: 20px;
     right: 20px;
-    bottom: max(8px, env(safe-area-inset-bottom, 0px));
+    bottom: max(14px, env(safe-area-inset-bottom, 0px));
   }
-  .topbar {
-    padding-top: env(safe-area-inset-top, 0px);
+  .reader-topbar {
+    height: calc(48px + env(safe-area-inset-top, 0px));
+    padding: env(safe-area-inset-top, 0px) 8px 0;
   }
   .topbar-title {
-    max-width: 42vw;
+    max-width: 46vw;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

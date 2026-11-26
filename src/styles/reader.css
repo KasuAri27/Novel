@@ -7,20 +7,35 @@
   background: var(--night);
 }
 
+/* 菜单栏浮在书页上方：点书页中间显示 / 隐藏，翻页后自动收起；不占版面，显隐不会触发重新分页 */
 .reader-topbar {
-  flex: none;
-  height: 56px;
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  height: calc(56px + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) 24px 0;
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  padding: 0 24px;
   background: var(--night-2);
   color: #fff;
   font-family: var(--ui-font);
-  z-index: 20;
+  box-shadow: 0 6px 24px rgba(8, 6, 16, 0.28);
+  transform: translateY(-100%);
+  visibility: hidden;
+  transition:
+    transform 0.22s ease,
+    visibility 0s linear 0.22s;
+}
+.play-screen.chrome-on .reader-topbar {
+  transform: none;
+  visibility: visible;
+  transition: transform 0.22s ease;
 }
 
-.play-screen.is-enter .reader-topbar {
+.play-screen.is-enter.chrome-on .reader-topbar {
   animation: topbar-in 200ms ease both;
 }
 
@@ -50,7 +65,8 @@
 }
 
 .topbar-btn {
-  min-height: 36px;
+  min-height: 40px;
+  min-width: 40px;
   border: none;
   background: transparent;
   color: #fff;
@@ -59,8 +75,12 @@
   padding: 6px 10px;
   border-radius: 8px;
 }
+.topbar-back {
+  justify-self: start;
+}
 .topbar-tools .topbar-btn {
   color: var(--muted-ui);
+  font-size: 15px;
 }
 .topbar-btn:hover {
   background: rgba(255, 255, 255, 0.06);
@@ -153,6 +173,12 @@
     inset 6px 0 10px rgba(80, 50, 20, 0.06),
     inset -6px 0 10px rgba(80, 50, 20, 0.06);
 }
+[data-theme='dark'] .book-gutter {
+  background: linear-gradient(90deg, #221d2a, #2f2839 40%, #221d2a);
+  box-shadow:
+    inset 6px 0 10px rgba(0, 0, 0, 0.25),
+    inset -6px 0 10px rgba(0, 0, 0, 0.25);
+}
 
 .leaf {
   min-width: 0;
@@ -163,22 +189,27 @@
   flex-direction: column;
 }
 
-.leaf-pagenum {
+/* 页眉：章节名（书本的「书眉」） */
+.leaf-head {
   flex: none;
   font-size: 12px;
   color: var(--ink-soft);
   margin-bottom: 18px;
   font-family: var(--ui-font);
+  letter-spacing: 0.06em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-/* 阅读器左右页高度必须一致，页码改成浮层，避免左页被挤矮、右页多出一行 */
+/* 阅读器左右页高度必须一致：页眉做成浮层，顶部留白让出菜单栏的高度 */
 .book-shell .leaf {
   position: relative;
-  padding-top: 52px;
+  padding-top: 64px;
 }
-.book-shell .leaf-pagenum {
+.book-shell .leaf-head {
   position: absolute;
-  top: 16px;
+  top: 22px;
   left: 48px;
   right: 48px;
   margin-bottom: 0;
@@ -193,6 +224,7 @@
 }
 
 .page-clip {
+  position: relative;
   flex: 1;
   min-height: 0;
   overflow: hidden;
@@ -211,8 +243,8 @@
 .page-leaf p,
 .choices-pane p,
 .title-spread .leaf-left p {
-  margin: 0 0 1.15em;
-  line-height: 2.05;
+  margin: 0 0 var(--reader-para-gap);
+  line-height: var(--reader-leading);
   font-size: var(--reader-font);
   color: var(--ink);
   text-align: justify;
@@ -228,7 +260,7 @@
   color: var(--ink);
 }
 .say-speaker {
-  color: var(--violet);
+  color: var(--speaker);
   font-weight: 650;
 }
 .say-act {
@@ -253,6 +285,39 @@
 .page-leaf p {
   text-indent: 0;
   text-align: center;
+}
+
+/* 段首章节标题 */
+.flow-heading {
+  margin: 0.4em 0 1.4em;
+  font-family: var(--book-font);
+  font-size: calc(var(--reader-font) * 1.3);
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-align: center;
+  color: var(--ink);
+  break-after: avoid;
+}
+
+/* 段首选择回显：提醒刚才选了什么 */
+.page-flow p.flow-echo {
+  margin: 0 0 1.2em;
+  padding: 2px 0 2px 12px;
+  border-left: 3px solid var(--speaker);
+  font-size: calc(var(--reader-font) * 0.86);
+  line-height: 1.7;
+  color: var(--ink-soft);
+  text-indent: 0;
+  text-align: left;
+  break-inside: avoid;
+}
+.flow-echo-tag {
+  margin-right: 8px;
+  font-family: var(--ui-font);
+  font-size: 0.86em;
+  font-style: normal;
+  letter-spacing: 0.08em;
+  color: var(--kicker);
 }
 
 .book-cast {
@@ -330,44 +395,47 @@
   font-size: 12px;
   color: var(--ink-soft);
 }
+.reader-progress-label {
+  flex: none;
+  min-width: 5.5em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
 .reader-progress-track {
   flex: 1;
-  height: 6px;
+  height: 4px;
   border-radius: 99px;
-  background: var(--line-ui);
+  background: var(--paper-edge);
   overflow: hidden;
 }
 .reader-progress-fill {
   height: 100%;
   border-radius: 99px;
   background: var(--violet);
+  transition: width 0.3s ease;
 }
 
 .reader-hint {
-  position: absolute;
-  left: 50%;
-  bottom: 52px;
-  z-index: 10;
-  transform: translateX(-50%);
-  padding: 8px 14px;
+  margin: 0 auto;
+  padding: 3px 12px;
   border-radius: 999px;
   font-size: 12px;
+  line-height: 1.5;
   letter-spacing: 1px;
+  white-space: nowrap;
   color: var(--ink-soft);
   background: var(--surface);
   border: 1px solid var(--paper-edge);
-  pointer-events: none;
   animation: hint-in 0.45s ease;
-  font-family: var(--ui-font);
 }
 @keyframes hint-in {
   from {
     opacity: 0;
-    transform: translateX(-50%) translateY(8px);
+    transform: translateY(6px);
   }
   to {
     opacity: 1;
-    transform: translateX(-50%);
+    transform: none;
   }
 }
 
@@ -386,18 +454,36 @@
 .book-shell.is-flipping .choice-card {
   pointer-events: none;
 }
+
+/* 末页选项：叠放在正文下方的空白处，不压缩正文区，所以不会重新分页 */
+.choices-overlay {
+  position: absolute;
+  left: 0;
+  right: 0;
+}
+.choices-overlay .choices-pane {
+  flex: none;
+  overflow: visible;
+  padding-top: 0;
+}
+.choices-measure {
+  top: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .choices-kicker {
-  margin: 0 0 18px;
+  margin: 0 0 14px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 650;
   letter-spacing: 0.12em;
-  color: var(--gold-ui);
+  color: var(--kicker);
   font-family: var(--ui-font);
 }
 .choices {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 .choice-card {
   display: flex;
@@ -405,12 +491,12 @@
   gap: 16px;
   text-align: left;
   width: 100%;
-  min-height: 68px;
+  min-height: 60px;
   background: var(--surface);
   color: var(--ink);
   border: 1px solid var(--line-ui);
   border-radius: 12px;
-  padding: 16px 20px;
+  padding: 14px 20px;
   font-size: 16px;
   line-height: 1.5;
   font-family: var(--ui-font);
@@ -419,12 +505,31 @@
   background: var(--choice-hover);
   transform: translateY(-1px);
 }
+.choice-card:focus-visible {
+  outline: 2px solid var(--speaker);
+  outline-offset: 2px;
+}
 .choice-letter {
   flex: none;
   width: 1.4em;
-  color: var(--violet);
+  color: var(--speaker);
   font-weight: 800;
 }
 .choice-label {
   flex: 1;
+}
+
+/* 想翻过选项页时，选项轻轻亮一下：提示需要先做选择 */
+.choices-pane.is-nudged .choice-card {
+  animation: choice-nudge 0.7s ease;
+}
+@keyframes choice-nudge {
+  0%,
+  100% {
+    box-shadow: none;
+  }
+  35% {
+    border-color: var(--speaker);
+    box-shadow: 0 0 0 4px rgba(140, 97, 219, 0.4);
+  }
 }

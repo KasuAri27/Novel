@@ -18,7 +18,10 @@
   --paper-fill: #f5f0e5;
   --paper-edge: #e8e0d1;
   --ink: #1a1724;
-  --ink-soft: #8c8594;
+  /* 纸面上的次要文字 / 说话人 / 选项小标题：对比度均 ≥ 4.5:1（WCAG AA） */
+  --ink-soft: #696373;
+  --speaker: #6a45c2;
+  --kicker: #86651c;
   --accent: #8c61db;
   --accent2: #a98ae8;
   --gold: #dbb86b;
@@ -46,6 +49,8 @@
   --choice-hover: #f7f2ff;
   --stage-shadow: rgba(8, 6, 16, 0.55);
   --reader-font: 18px;
+  --reader-leading: 1.85;
+  --reader-para-gap: 0.7em;
   --ui-font: ui-sans-serif, system-ui, 'PingFang SC', 'Noto Sans SC', sans-serif;
   --book-font: 'Noto Serif SC', 'Songti SC', 'SimSun', Georgia, serif;
   color-scheme: dark;
@@ -58,6 +63,8 @@
   --paper-edge: #3d3548;
   --ink: #ebe6dc;
   --ink-soft: #a89eb0;
+  --speaker: #b49cf0;
+  --kicker: #dbb86b;
   --surface: #322b3d;
   --choice-hover: #3a3248;
   --curl-1: #3a342c;
